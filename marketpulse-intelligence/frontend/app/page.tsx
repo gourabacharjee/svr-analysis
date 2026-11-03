@@ -3,7 +3,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { INITIAL_MARKET_DATA } from "./data/marketData";
 import {
+  STOCK_PROFILES,
+  getStockProfile,
+  type StockAnalysisProfile,
+} from "./data/stockProfiles";
+import {
   Activity,
+  AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
   BarChart2,
@@ -19,7 +25,9 @@ import {
   Clock,
   Compass,
   DollarSign,
+  Download,
   ExternalLink,
+  FileText,
   Filter,
   Flame,
   Globe2,
@@ -27,9 +35,11 @@ import {
   Landmark,
   Layers,
   LayoutDashboard,
+  LineChart,
   Menu,
   Newspaper,
   Percent,
+  PieChart,
   Plus,
   RefreshCw,
   Scale,
@@ -174,6 +184,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
 const NAV_ITEMS = [
   { id: "overview", label: "Dashboard Overview", icon: LayoutDashboard },
+  { id: "screener", label: "Stock Screener (Screener.in)", icon: LineChart, badge: "Deep" },
   { id: "catalysts", label: "Company Catalysts & CEO Alerts", icon: Building2, badge: "Edge" },
   { id: "stocks", label: "NSE & BSE Stock News", icon: Newspaper, badge: "Live" },
   { id: "sebi", label: "SEBI Rules & Guidelines", icon: Scale, badge: "Crucial" },
@@ -205,6 +216,13 @@ export default function SVRAnalysisHome() {
   const [lastSyncTime, setLastSyncTime] = useState<string>("Just now");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+
+  // Screener.in Deep Stock Analysis State
+  const [selectedStockProfile, setSelectedStockProfile] = useState<StockAnalysisProfile | null>(
+    STOCK_PROFILES["RELIANCE"]
+  );
+  const [selectedChartRange, setSelectedChartRange] = useState<"1M" | "6M" | "1Y" | "3Y" | "5Y">("5Y");
+  const [screenerSearchText, setScreenerSearchText] = useState("");
 
   // Watchlist custom state
   const [customWatchlist, setCustomWatchlist] = useState<
@@ -824,11 +842,46 @@ export default function SVRAnalysisHome() {
                 </span>
               </div>
 
+              {/* One-Click Direct Screener Analysis Launch Card */}
+              {searchQuery.trim().length > 0 && (
+                <div
+                  onClick={() => {
+                    const prof = getStockProfile(searchQuery);
+                    setSelectedStockProfile(prof || STOCK_PROFILES["RELIANCE"]);
+                    setActiveTab("screener");
+                    setIsSearchFocused(false);
+                  }}
+                  className="p-3 rounded-xl bg-gradient-to-r from-blue-950/70 via-emerald-950/50 to-[#0F223D] border border-emerald-500/40 hover:border-emerald-400 cursor-pointer transition shadow-lg group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-300 group-hover:scale-105 transition">
+                        <LineChart size={18} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black font-mono text-white group-hover:text-emerald-300 transition">
+                            {searchQuery.trim().toUpperCase()}
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+                            ⚡ Open Screener.in Analysis
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#A2B6D4] mt-0.5">
+                          5Y/6M Price Charts, Ratios, Peers, FII/DII Shareholding & Annual Reports
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight size={18} className="text-emerald-400 group-hover:translate-x-1 transition" />
+                  </div>
+                </div>
+              )}
+
               {searchResults.totalCount === 0 ? (
-                <div className="py-6 text-center text-xs text-[#6A81A4] space-y-1">
-                  <p>No direct matches found for &quot;{searchQuery}&quot;.</p>
+                <div className="py-4 text-center text-xs text-[#6A81A4] space-y-1">
+                  <p>No matching news/catalysts for &quot;{searchQuery}&quot;.</p>
                   <p className="text-[10px] text-[#556985]">
-                    Try searching: <strong>RELIANCE</strong>, <strong>WIPRO</strong>, <strong>CEO</strong>, <strong>SEBI</strong>, <strong>BAN</strong>, or <strong>NIFTY</strong>
+                    Click the green card above to view full Screener.in fundamentals for <strong>{searchQuery.toUpperCase()}</strong>!
                   </p>
                 </div>
               ) : (
@@ -1845,6 +1898,957 @@ export default function SVRAnalysisHome() {
             </div>
           )}
 
+          {/* VIEW: STOCK SCREENER & FUNDAMENTALS (SCREENER.IN STYLE) */}
+          {activeTab === "screener" && (
+            <div className="space-y-6">
+              {/* Screener Top Control Header */}
+              <div className="bg-gradient-to-r from-blue-950/50 via-[#101C30] to-[#0A1322] border border-blue-500/30 rounded-2xl p-6 shadow-xl">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                      <LineChart size={16} />
+                      <span>Screener.in-Style Free Institutional Research</span>
+                    </div>
+                    <h2 className="text-xl font-black text-white mt-1">
+                      Indian Stock Fundamental & Technical Screener
+                    </h2>
+                    <p className="text-xs text-[#95AAC9] mt-1 max-w-2xl leading-relaxed">
+                      Complete financial health analysis, 5-year and 6-month price performance, valuation ratios,
+                      compounded CAGR metrics, FII/DII shareholding shifts, and official regulatory filings.
+                    </p>
+                  </div>
+
+                  {/* Stock Quick Search Input */}
+                  <div className="w-full md:w-80">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (screenerSearchText.trim()) {
+                          const prof = getStockProfile(screenerSearchText);
+                          setSelectedStockProfile(prof || STOCK_PROFILES["RELIANCE"]);
+                          setScreenerSearchText("");
+                        }
+                      }}
+                      className="relative"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Search company (e.g. BEL, TCS, Tata)..."
+                        value={screenerSearchText}
+                        onChange={(e) => setScreenerSearchText(e.target.value)}
+                        className="w-full bg-[#0D1525] border border-[#213759] focus:border-emerald-400 rounded-xl pl-9 pr-14 py-2.5 text-xs text-white placeholder-[#5D7396] outline-none transition shadow-inner"
+                      />
+                      <Search
+                        size={15}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5D7396]"
+                      />
+                      <button
+                        type="submit"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition"
+                      >
+                        Search
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+                {/* Popular Quick-Select Stock Chips */}
+                <div className="mt-4 pt-4 border-t border-[#192B45] flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  <span className="text-[10px] font-bold text-[#6D83A6] uppercase tracking-wider shrink-0">
+                    Popular:
+                  </span>
+                  {[
+                    { label: "Reliance", sym: "RELIANCE" },
+                    { label: "HDFC Bank", sym: "HDFCBANK" },
+                    { label: "Tata Motors", sym: "TATAMOTORS" },
+                    { label: "TCS", sym: "TCS" },
+                    { label: "Bharat Electronics", sym: "BEL" },
+                    { label: "Infosys", sym: "INFY" },
+                    { label: "ICICI Bank", sym: "ICICIBANK" },
+                    { label: "State Bank of India", sym: "SBIN" },
+                    { label: "ITC Ltd", sym: "ITC" },
+                  ].map((chip) => {
+                    const isSelected =
+                      selectedStockProfile?.symbol.toUpperCase() === chip.sym.toUpperCase();
+                    return (
+                      <button
+                        key={chip.sym}
+                        onClick={() =>
+                          setSelectedStockProfile(getStockProfile(chip.sym) || STOCK_PROFILES["RELIANCE"])
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition border ${
+                          isSelected
+                            ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-sm"
+                            : "bg-[#0D1525] border-[#1C2F4D] text-[#8EA3C2] hover:bg-[#14223A] hover:text-white"
+                        }`}
+                      >
+                        {chip.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SECTION 1: COMPANY HEADER & ABOUT */}
+              {selectedStockProfile && (
+                <div className="space-y-6">
+                  <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-6 shadow-lg">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#14233D]">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h1 className="text-2xl font-black text-white">
+                            {selectedStockProfile.name}
+                          </h1>
+                          <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono font-bold text-xs border border-blue-500/30">
+                            NSE: {selectedStockProfile.nseCode}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#18263E] text-[#8BA0BF] font-mono text-xs">
+                            BSE: {selectedStockProfile.bseCode}
+                          </span>
+                        </div>
+                        <p className="text-xs text-emerald-400 font-medium mt-1">
+                          {selectedStockProfile.sector} • <span className="text-[#89A0C1]">{selectedStockProfile.industry}</span>
+                        </p>
+                      </div>
+
+                      {/* Official Direct Links */}
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={selectedStockProfile.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121E33] hover:bg-[#182946] border border-[#1E3354] text-xs font-semibold text-slate-200 transition"
+                        >
+                          <Globe2 size={13} className="text-blue-400" />
+                          <span>Website</span>
+                          <ExternalLink size={11} className="text-slate-400" />
+                        </a>
+                        <a
+                          href="https://www.bseindia.com/"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121E33] hover:bg-[#182946] border border-[#1E3354] text-xs font-semibold text-slate-200 transition"
+                        >
+                          <Building2 size={13} className="text-amber-400" />
+                          <span>BSE</span>
+                          <ExternalLink size={11} className="text-slate-400" />
+                        </a>
+                        <a
+                          href="https://www.nseindia.com/"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121E33] hover:bg-[#182946] border border-[#1E3354] text-xs font-semibold text-slate-200 transition"
+                        >
+                          <BarChart2 size={13} className="text-emerald-400" />
+                          <span>NSE</span>
+                          <ExternalLink size={11} className="text-slate-400" />
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* About Box */}
+                    <div className="mt-4 bg-[#080D18] border border-[#14233D] rounded-xl p-4">
+                      <span className="text-[10px] font-bold text-[#6D83A6] uppercase tracking-wider block mb-1">
+                        About The Company
+                      </span>
+                      <p className="text-xs text-[#9BB0CF] leading-relaxed">
+                        {selectedStockProfile.about}
+                      </p>
+                    </div>
+
+                    {/* SECTION 2: KEY RATIOS GRID (SCREENER.IN TOP CARD) */}
+                    <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">Market Cap</span>
+                        <span className="text-sm font-black text-white mt-0.5 block">
+                          {selectedStockProfile.marketCap}
+                        </span>
+                      </div>
+
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">Current Price</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-sm font-black text-white">
+                            {selectedStockProfile.currentPrice}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold ${
+                              selectedStockProfile.priceTone === "up" ? "text-emerald-400" : "text-rose-400"
+                            }`}
+                          >
+                            {selectedStockProfile.priceChange}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">High / Low (52W)</span>
+                        <span className="text-xs font-black text-white mt-0.5 block font-mono">
+                          {selectedStockProfile.high52} / {selectedStockProfile.low52}
+                        </span>
+                      </div>
+
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">Stock P/E</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-sm font-black text-cyan-300">
+                            {selectedStockProfile.stockPe}
+                          </span>
+                          <span className="text-[9px] text-[#5A7194]">
+                            (Ind: {selectedStockProfile.industryPe})
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">Book Value</span>
+                        <span className="text-sm font-black text-white mt-0.5 block">
+                          {selectedStockProfile.bookValue}
+                        </span>
+                      </div>
+
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">Dividend Yield</span>
+                        <span className="text-sm font-black text-emerald-400 mt-0.5 block">
+                          {selectedStockProfile.dividendYield}
+                        </span>
+                      </div>
+
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">ROCE</span>
+                        <span className="text-sm font-black text-emerald-400 mt-0.5 block">
+                          {selectedStockProfile.roce}
+                        </span>
+                      </div>
+
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">ROE</span>
+                        <span className="text-sm font-black text-emerald-400 mt-0.5 block">
+                          {selectedStockProfile.roe}
+                        </span>
+                      </div>
+
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">Face Value</span>
+                        <span className="text-sm font-black text-white mt-0.5 block">
+                          {selectedStockProfile.faceValue}
+                        </span>
+                      </div>
+
+                      <div className="bg-[#0D1628] border border-[#182845] rounded-xl p-3">
+                        <span className="text-[10px] font-semibold text-[#6C82A4] block">Debt to Equity</span>
+                        <span className="text-sm font-black text-cyan-300 mt-0.5 block">
+                          {selectedStockProfile.debtToEquity}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 3: INTERACTIVE 5-YEAR & 6-MONTH CHART */}
+                  <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-6 shadow-lg space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-white">Price & Technical Moving Average</span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                              selectedStockProfile.chartHistory[selectedChartRange].tone === "up"
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                            }`}
+                          >
+                            {selectedStockProfile.chartHistory[selectedChartRange].changePct} ({selectedChartRange})
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#6E85A8] mt-0.5">
+                          Historical daily price movement plotted against 50-DMA and trading volume histogram.
+                        </p>
+                      </div>
+
+                      {/* Timeframe Buttons */}
+                      <div className="flex items-center gap-1.5 bg-[#0D1628] p-1 rounded-xl border border-[#182845]">
+                        {(["1M", "6M", "1Y", "3Y", "5Y"] as const).map((range) => (
+                          <button
+                            key={range}
+                            onClick={() => setSelectedChartRange(range)}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                              selectedChartRange === range
+                                ? "bg-emerald-600 text-white shadow-sm"
+                                : "text-[#7B92B5] hover:text-white hover:bg-[#14233C]"
+                            }`}
+                          >
+                            {range}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SVG Chart Rendering */}
+                    {(() => {
+                      const chartData = selectedStockProfile.chartHistory[selectedChartRange];
+                      const pts = chartData.points;
+                      const prices = pts.map((p) => p.price);
+                      const dmas = pts.map((p) => p.dma50);
+                      const volumes = pts.map((p) => p.volume);
+                      const allVals = [...prices, ...dmas];
+                      const minVal = Math.min(...allVals) * 0.95;
+                      const maxVal = Math.max(...allVals) * 1.05;
+                      const maxVol = Math.max(...volumes);
+
+                      const svgW = 750;
+                      const svgH = 240;
+                      const padTop = 20;
+                      const padBottom = 40;
+                      const padLeft = 45;
+                      const padRight = 20;
+                      const plotW = svgW - padLeft - padRight;
+                      const plotH = svgH - padTop - padBottom;
+
+                      const getX = (idx: number) => padLeft + (idx / (pts.length - 1)) * plotW;
+                      const getY = (v: number) => padTop + plotH - ((v - minVal) / (maxVal - minVal || 1)) * plotH;
+
+                      // Price Polyline / Path
+                      const pricePath = pts
+                        .map((p, i) => `${i === 0 ? "M" : "L"} ${getX(i).toFixed(1)} ${getY(p.price).toFixed(1)}`)
+                        .join(" ");
+
+                      // Gradient Area Path
+                      const areaPath = `${pricePath} L ${getX(pts.length - 1).toFixed(1)} ${(padTop + plotH).toFixed(
+                        1
+                      )} L ${getX(0).toFixed(1)} ${(padTop + plotH).toFixed(1)} Z`;
+
+                      // 50 DMA Path
+                      const dmaPath = pts
+                        .map((p, i) => `${i === 0 ? "M" : "L"} ${getX(i).toFixed(1)} ${getY(p.dma50).toFixed(1)}`)
+                        .join(" ");
+
+                      return (
+                        <div className="w-full overflow-x-auto bg-[#070D18] rounded-xl p-3 border border-[#14233D]">
+                          <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-56 min-w-[500px]">
+                            <defs>
+                              <linearGradient id="screenerPriceGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#10B981" stopOpacity="0.35" />
+                                <stop offset="100%" stopColor="#10B981" stopOpacity="0.0" />
+                              </linearGradient>
+                            </defs>
+
+                            {/* Background Grid Lines */}
+                            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                              const y = padTop + plotH * (1 - ratio);
+                              const priceVal = (minVal + (maxVal - minVal) * ratio).toFixed(0);
+                              return (
+                                <g key={ratio}>
+                                  <line
+                                    x1={padLeft}
+                                    y1={y}
+                                    x2={svgW - padRight}
+                                    y2={y}
+                                    stroke="#13233C"
+                                    strokeDasharray="3 3"
+                                  />
+                                  <text
+                                    x={padLeft - 6}
+                                    y={y + 3}
+                                    textAnchor="end"
+                                    fill="#526987"
+                                    fontSize="9"
+                                    fontFamily="monospace"
+                                  >
+                                    ₹{priceVal}
+                                  </text>
+                                </g>
+                              );
+                            })}
+
+                            {/* Volume Bars */}
+                            {pts.map((p, i) => {
+                              const barW = Math.max(2, plotW / pts.length - 3);
+                              const barH = (p.volume / (maxVol || 1)) * 36;
+                              const x = getX(i) - barW / 2;
+                              const y = padTop + plotH - barH;
+                              return (
+                                <rect
+                                  key={`vol-${i}`}
+                                  x={x}
+                                  y={y}
+                                  width={barW}
+                                  height={barH}
+                                  fill="#1D385F"
+                                  opacity="0.5"
+                                  rx="1"
+                                />
+                              );
+                            })}
+
+                            {/* Area Gradient */}
+                            <path d={areaPath} fill="url(#screenerPriceGrad)" />
+
+                            {/* Price Line */}
+                            <path
+                              d={pricePath}
+                              fill="none"
+                              stroke="#10B981"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+
+                            {/* 50-DMA Overlay Line */}
+                            <path
+                              d={dmaPath}
+                              fill="none"
+                              stroke="#F59E0B"
+                              strokeWidth="1.8"
+                              strokeDasharray="4 3"
+                            />
+
+                            {/* Data Point Markers & Labels */}
+                            {pts.map((p, i) => {
+                              const x = getX(i);
+                              const y = getY(p.price);
+                              return (
+                                <g key={`pt-${i}`}>
+                                  <circle cx={x} cy={y} r="3.5" fill="#0B1220" stroke="#10B981" strokeWidth="2" />
+                                  <text
+                                    x={x}
+                                    y={padTop + plotH + 18}
+                                    textAnchor="middle"
+                                    fill="#6E85A8"
+                                    fontSize="9"
+                                    fontWeight="bold"
+                                  >
+                                    {p.date}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </svg>
+
+                          {/* Legend */}
+                          <div className="flex items-center justify-end gap-5 mt-2 px-2 text-[11px] text-[#7890B2]">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-3 h-0.5 bg-emerald-500 rounded"></span>
+                              <span className="text-white font-medium">Price</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-3 h-0.5 border-t-2 border-dashed border-amber-400"></span>
+                              <span className="text-amber-300 font-medium">50-DMA</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 bg-[#1D385F] rounded-sm"></span>
+                              <span>Volume</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* SECTION 4: PROS AND CONS (SCREENER.IN CLASSIC) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* PROS */}
+                    <div className="bg-[#0B1220] border border-emerald-500/30 rounded-2xl p-5 shadow-lg">
+                      <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-3">
+                        <CheckCircle2 size={16} />
+                        <span>Company Strengths (Pros)</span>
+                      </div>
+                      <ul className="space-y-2.5">
+                        {selectedStockProfile.pros.map((pro, idx) => (
+                          <li key={idx} className="flex items-start gap-2.5 text-xs text-[#A2B6D4] leading-relaxed">
+                            <span className="text-emerald-400 font-black mt-0.5">✔</span>
+                            <span>{pro}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CONS */}
+                    <div className="bg-[#0B1220] border border-rose-500/30 rounded-2xl p-5 shadow-lg">
+                      <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider mb-3">
+                        <AlertTriangle size={16} />
+                        <span>Key Limitations & Risks (Cons)</span>
+                      </div>
+                      <ul className="space-y-2.5">
+                        {selectedStockProfile.cons.map((con, idx) => (
+                          <li key={idx} className="flex items-start gap-2.5 text-xs text-[#A2B6D4] leading-relaxed">
+                            <span className="text-rose-400 font-black mt-0.5">⚠</span>
+                            <span>{con}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* SECTION 5: PEER COMPARISON */}
+                  <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-6 shadow-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                          <Scale size={16} className="text-cyan-400" />
+                          <span>Industry Peer Comparison</span>
+                        </h3>
+                        <p className="text-[11px] text-[#6E85A8]">
+                          Valuation and profitability benchmark against sector competitors.
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">
+                        {selectedStockProfile.sector}
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-[#080D18] text-[#62799A] uppercase text-[10px] font-bold border-y border-[#14233D]">
+                          <tr>
+                            <th className="py-2.5 px-3">S.No.</th>
+                            <th className="py-2.5 px-3">Company Name</th>
+                            <th className="py-2.5 px-3 text-right">CMP (₹)</th>
+                            <th className="py-2.5 px-3 text-right">P/E</th>
+                            <th className="py-2.5 px-3 text-right">Mar Cap (₹ Cr)</th>
+                            <th className="py-2.5 px-3 text-right">Div Yield</th>
+                            <th className="py-2.5 px-3 text-right">ROCE</th>
+                            <th className="py-2.5 px-3 text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#13223A]">
+                          {selectedStockProfile.peers.map((peer, idx) => (
+                            <tr key={idx} className="hover:bg-[#0E172A] transition">
+                              <td className="py-2.5 px-3 text-[#5A7194] font-mono">{idx + 1}</td>
+                              <td className="py-2.5 px-3 font-bold text-white">{peer.name}</td>
+                              <td className="py-2.5 px-3 text-right font-mono text-white">{peer.cmp}</td>
+                              <td className="py-2.5 px-3 text-right font-mono text-cyan-300 font-bold">
+                                {peer.pe}
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-mono text-white">{peer.marCap}</td>
+                              <td className="py-2.5 px-3 text-right font-mono text-emerald-400">
+                                {peer.divYield}
+                              </td>
+                              <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">
+                                {peer.roce}
+                              </td>
+                              <td className="py-2.5 px-3 text-center">
+                                <button
+                                  onClick={() =>
+                                    setSelectedStockProfile(
+                                      getStockProfile(peer.name) || STOCK_PROFILES["RELIANCE"]
+                                    )
+                                  }
+                                  className="px-2 py-1 rounded bg-[#162744] hover:bg-emerald-600 text-[10px] font-bold text-emerald-300 hover:text-white transition"
+                                >
+                                  Analyze
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* SECTION 6: QUARTERLY RESULTS */}
+                  <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-6 shadow-lg space-y-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <FileText size={16} className="text-emerald-400" />
+                        <span>Quarterly Financial Performance</span>
+                      </h3>
+                      <p className="text-[11px] text-[#6E85A8]">
+                        Consolidated quarterly figures reported to BSE & NSE (Figures in ₹ Crores).
+                      </p>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-[#080D18] text-[#62799A] uppercase text-[10px] font-bold border-y border-[#14233D]">
+                          <tr>
+                            <th className="py-2.5 px-3">Metric</th>
+                            {selectedStockProfile.quarterlyResults.map((q, idx) => (
+                              <th key={idx} className="py-2.5 px-3 text-right font-mono text-white">
+                                {q.quarter}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#13223A] font-mono">
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-white">Sales (Revenue)</td>
+                            {selectedStockProfile.quarterlyResults.map((q, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-slate-200">
+                                {q.sales}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-white">Operating Profit</td>
+                            {selectedStockProfile.quarterlyResults.map((q, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-emerald-400 font-bold">
+                                {q.opProfit}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-white">OPM %</td>
+                            {selectedStockProfile.quarterlyResults.map((q, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-cyan-300">
+                                {q.opm}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-white">Net Profit</td>
+                            {selectedStockProfile.quarterlyResults.map((q, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-emerald-400 font-bold">
+                                {q.netProfit}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-white">EPS in ₹</td>
+                            {selectedStockProfile.quarterlyResults.map((q, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-white">
+                                {q.eps}
+                              </td>
+                            ))}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* SECTION 7: COMPOUNDED GROWTH MATRIX (4-BOX SCREENER FORMAT) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Box 1: Compounded Sales Growth */}
+                    <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-4 shadow-lg space-y-2">
+                      <span className="text-xs font-bold text-white block pb-1 border-b border-[#14233D]">
+                        Compounded Sales Growth
+                      </span>
+                      <div className="space-y-1.5 text-xs font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">10 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.salesGrowth.p10}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">5 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.salesGrowth.p5}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">3 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.salesGrowth.p3}</span>
+                        </div>
+                        <div className="flex justify-between text-emerald-400">
+                          <span className="font-sans font-bold">TTM:</span>
+                          <span className="font-bold">{selectedStockProfile.compoundedGrowth.salesGrowth.ttm}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Box 2: Compounded Profit Growth */}
+                    <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-4 shadow-lg space-y-2">
+                      <span className="text-xs font-bold text-white block pb-1 border-b border-[#14233D]">
+                        Compounded Profit Growth
+                      </span>
+                      <div className="space-y-1.5 text-xs font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">10 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.profitGrowth.p10}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">5 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.profitGrowth.p5}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">3 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.profitGrowth.p3}</span>
+                        </div>
+                        <div className="flex justify-between text-emerald-400">
+                          <span className="font-sans font-bold">TTM:</span>
+                          <span className="font-bold">{selectedStockProfile.compoundedGrowth.profitGrowth.ttm}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Box 3: Stock Price CAGR */}
+                    <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-4 shadow-lg space-y-2">
+                      <span className="text-xs font-bold text-white block pb-1 border-b border-[#14233D]">
+                        Stock Price CAGR
+                      </span>
+                      <div className="space-y-1.5 text-xs font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">10 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.stockCagr.p10}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">5 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.stockCagr.p5}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">3 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.stockCagr.p3}</span>
+                        </div>
+                        <div className="flex justify-between text-emerald-400">
+                          <span className="font-sans font-bold">1 Year:</span>
+                          <span className="font-bold">{selectedStockProfile.compoundedGrowth.stockCagr.p1}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Box 4: Return on Equity */}
+                    <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-4 shadow-lg space-y-2">
+                      <span className="text-xs font-bold text-white block pb-1 border-b border-[#14233D]">
+                        Return on Equity (ROE)
+                      </span>
+                      <div className="space-y-1.5 text-xs font-mono">
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">10 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.roe.p10}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">5 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.roe.p5}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#6D83A6] font-sans">3 Years:</span>
+                          <span className="text-white font-bold">{selectedStockProfile.compoundedGrowth.roe.p3}</span>
+                        </div>
+                        <div className="flex justify-between text-emerald-400">
+                          <span className="font-sans font-bold">Last Year:</span>
+                          <span className="font-bold">{selectedStockProfile.compoundedGrowth.roe.lastYear}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 8: SHAREHOLDING PATTERN & INSTITUTIONAL TRENDS (FIIs, DIIs, PROMOTERS) */}
+                  <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-6 shadow-lg space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                          <PieChart size={16} className="text-blue-400" />
+                          <span>Shareholding Pattern (FIIs, DIIs, Promoters & Public)</span>
+                        </h3>
+                        <p className="text-[11px] text-[#6E85A8]">
+                          Quarterly holding shifts tracked by institutional investors.
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                        Institutional Backed
+                      </span>
+                    </div>
+
+                    {/* Visual Progress Bar (Latest Period) */}
+                    {(() => {
+                      const sh = selectedStockProfile.shareholding;
+                      const latestIdx = sh.periods.length - 1;
+                      const promVal = parseFloat(sh.promoters[latestIdx]) || 50;
+                      const fiiVal = parseFloat(sh.fiis[latestIdx]) || 20;
+                      const diiVal = parseFloat(sh.diis[latestIdx]) || 15;
+                      const pubVal = parseFloat(sh.public[latestIdx]) || 15;
+                      return (
+                        <div className="space-y-2">
+                          <div className="h-4 w-full bg-[#080D18] rounded-full overflow-hidden flex border border-[#18263E]">
+                            <div
+                              style={{ width: `${promVal}%` }}
+                              className="bg-blue-600 hover:bg-blue-500 transition"
+                              title={`Promoters: ${sh.promoters[latestIdx]}`}
+                            />
+                            <div
+                              style={{ width: `${fiiVal}%` }}
+                              className="bg-emerald-500 hover:bg-emerald-400 transition"
+                              title={`FIIs: ${sh.fiis[latestIdx]}`}
+                            />
+                            <div
+                              style={{ width: `${diiVal}%` }}
+                              className="bg-cyan-400 hover:bg-cyan-300 transition"
+                              title={`DIIs: ${sh.diis[latestIdx]}`}
+                            />
+                            <div
+                              style={{ width: `${pubVal}%` }}
+                              className="bg-amber-400 hover:bg-amber-300 transition"
+                              title={`Public: ${sh.public[latestIdx]}`}
+                            />
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between text-[11px] pt-1">
+                            <span className="flex items-center gap-1.5 text-blue-300">
+                              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span>
+                              Promoters: <strong>{sh.promoters[latestIdx]}</strong>
+                            </span>
+                            <span className="flex items-center gap-1.5 text-emerald-300">
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                              FIIs: <strong>{sh.fiis[latestIdx]}</strong>
+                            </span>
+                            <span className="flex items-center gap-1.5 text-cyan-300">
+                              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span>
+                              DIIs: <strong>{sh.diis[latestIdx]}</strong>
+                            </span>
+                            <span className="flex items-center gap-1.5 text-amber-300">
+                              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
+                              Public: <strong>{sh.public[latestIdx]}</strong>
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Historical Trend Table */}
+                    <div className="overflow-x-auto pt-2">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-[#080D18] text-[#62799A] uppercase text-[10px] font-bold border-y border-[#14233D]">
+                          <tr>
+                            <th className="py-2.5 px-3">Shareholder Category</th>
+                            {selectedStockProfile.shareholding.periods.map((p, idx) => (
+                              <th key={idx} className="py-2.5 px-3 text-right font-mono text-white">
+                                {p}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#13223A] font-mono">
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-blue-300">Promoters</td>
+                            {selectedStockProfile.shareholding.promoters.map((val, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-slate-200">
+                                {val}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-emerald-400">FIIs (Foreign Institutional)</td>
+                            {selectedStockProfile.shareholding.fiis.map((val, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-emerald-300 font-bold">
+                                {val}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-cyan-300">DIIs (Domestic Mutual Funds & Insurers)</td>
+                            {selectedStockProfile.shareholding.diis.map((val, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-cyan-300 font-bold">
+                                {val}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-[#8FA5C4]">Government</td>
+                            {selectedStockProfile.shareholding.government.map((val, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-[#8FA5C4]">
+                                {val}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr className="hover:bg-[#0E172A] transition">
+                            <td className="py-2.5 px-3 font-sans font-semibold text-amber-300">Public & Retail</td>
+                            {selectedStockProfile.shareholding.public.map((val, idx) => (
+                              <td key={idx} className="py-2.5 px-3 text-right text-slate-300">
+                                {val}
+                              </td>
+                            ))}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* SECTION 9: ANNUAL REPORTS, CONCALLS & INVESTOR PRESENTATIONS */}
+                  <div className="bg-[#0B1220] border border-[#182844] rounded-2xl p-6 shadow-lg space-y-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <BookOpen size={16} className="text-emerald-400" />
+                        <span>Official Filings: Annual Reports, Presentations & Concalls</span>
+                      </h3>
+                      <p className="text-[11px] text-[#6E85A8]">
+                        Direct regulatory links to statutory audited disclosures filed with BSE and NSE.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Annual Reports Card */}
+                      <div className="bg-[#080D18] border border-[#15233A] rounded-xl p-4 space-y-2.5">
+                        <span className="text-xs font-bold text-white flex items-center gap-1.5 pb-2 border-b border-[#14233D]">
+                          <FileText size={14} className="text-rose-400" />
+                          <span>Annual Reports (PDFs)</span>
+                        </span>
+                        <div className="space-y-2">
+                          {selectedStockProfile.annualReports.map((ar, idx) => (
+                            <a
+                              key={idx}
+                              href={ar.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center justify-between p-2 rounded-lg bg-[#0E172A] hover:bg-[#162744] border border-[#1A2D4A] text-xs transition group"
+                            >
+                              <div className="space-y-0.5">
+                                <span className="font-bold text-white group-hover:text-emerald-300 transition">
+                                  {ar.year}
+                                </span>
+                                <p className="text-[10px] text-[#7990B0] line-clamp-1">{ar.title}</p>
+                              </div>
+                              <Download size={13} className="text-[#647D9F] group-hover:text-emerald-400" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Investor Presentations Card */}
+                      <div className="bg-[#080D18] border border-[#15233A] rounded-xl p-4 space-y-2.5">
+                        <span className="text-xs font-bold text-white flex items-center gap-1.5 pb-2 border-b border-[#14233D]">
+                          <BarChart2 size={14} className="text-blue-400" />
+                          <span>Investor Presentations</span>
+                        </span>
+                        <div className="space-y-2">
+                          {selectedStockProfile.investorPresentations.map((ip, idx) => (
+                            <a
+                              key={idx}
+                              href={ip.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center justify-between p-2 rounded-lg bg-[#0E172A] hover:bg-[#162744] border border-[#1A2D4A] text-xs transition group"
+                            >
+                              <div className="space-y-0.5">
+                                <span className="font-bold text-white group-hover:text-cyan-300 transition">
+                                  {ip.quarter}
+                                </span>
+                                <p className="text-[10px] text-[#7990B0] line-clamp-1">{ip.title}</p>
+                              </div>
+                              <ExternalLink size={13} className="text-[#647D9F] group-hover:text-cyan-300" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Concall Transcripts Card */}
+                      <div className="bg-[#080D18] border border-[#15233A] rounded-xl p-4 space-y-2.5">
+                        <span className="text-xs font-bold text-white flex items-center gap-1.5 pb-2 border-b border-[#14233D]">
+                          <Clock size={14} className="text-amber-400" />
+                          <span>Concall Transcripts</span>
+                        </span>
+                        <div className="space-y-2">
+                          {selectedStockProfile.concallTranscripts.map((cc, idx) => (
+                            <a
+                              key={idx}
+                              href={cc.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center justify-between p-2 rounded-lg bg-[#0E172A] hover:bg-[#162744] border border-[#1A2D4A] text-xs transition group"
+                            >
+                              <div className="space-y-0.5">
+                                <span className="font-bold text-white group-hover:text-amber-300 transition">
+                                  {cc.quarter}
+                                </span>
+                                <p className="text-[10px] text-[#7990B0] line-clamp-1">{cc.title}</p>
+                              </div>
+                              <ExternalLink size={13} className="text-[#647D9F] group-hover:text-amber-300" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* VIEW: COMPANY CATALYSTS & CEO / LEADERSHIP ALERTS */}
           {activeTab === "catalysts" && (
             <div className="space-y-6">
@@ -1907,6 +2911,19 @@ export default function SVRAnalysisHome() {
                             <span className="font-mono font-black text-sm text-cyan-300 bg-[#122238] px-2.5 py-1 rounded-lg border border-[#203B61]">
                               NSE: {item.symbol}
                             </span>
+                            <button
+                              onClick={() => {
+                                setSelectedStockProfile(
+                                  getStockProfile(item.symbol) || STOCK_PROFILES["RELIANCE"]
+                                );
+                                setActiveTab("screener");
+                              }}
+                              className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/15 hover:bg-emerald-500/20 text-blue-300 hover:text-emerald-300 border border-blue-500/30 hover:border-emerald-500/40 transition"
+                              title={`Open Screener.in analysis for ${item.symbol}`}
+                            >
+                              <LineChart size={11} />
+                              <span>Screener</span>
+                            </button>
                             <span className="text-xs text-[#89A0C3] font-medium hidden sm:inline">
                               {item.company_name}
                             </span>
