@@ -203,6 +203,8 @@ export default function SVRAnalysisHome() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [secondsUntilSync, setSecondsUntilSync] = useState(30);
   const [lastSyncTime, setLastSyncTime] = useState<string>("Just now");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   // Watchlist custom state
   const [customWatchlist, setCustomWatchlist] = useState<
@@ -393,6 +395,82 @@ export default function SVRAnalysisHome() {
     return data.news.filter((item) => savedNewsIds.includes(item.id));
   }, [data?.news, savedNewsIds]);
 
+  // Comprehensive Live Search Results Across Everything
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return null;
+
+    // 1. Matching Stock News
+    const matchedNews = (data?.news || []).filter(
+      (n) =>
+        n.headline.toLowerCase().includes(q) ||
+        n.summary.toLowerCase().includes(q) ||
+        n.stocks_affected.toLowerCase().includes(q) ||
+        n.category.toLowerCase().includes(q) ||
+        n.actionable_takeaway.toLowerCase().includes(q)
+    );
+
+    // 2. Matching Company Catalysts & CEO Alerts
+    const matchedCatalysts = (data?.company_catalysts || INITIAL_MARKET_DATA.company_catalysts || []).filter(
+      (c) =>
+        c.symbol.toLowerCase().includes(q) ||
+        c.company_name.toLowerCase().includes(q) ||
+        c.headline.toLowerCase().includes(q) ||
+        c.details.toLowerCase().includes(q) ||
+        c.catalyst_type.toLowerCase().includes(q) ||
+        c.trader_advantage.toLowerCase().includes(q)
+    );
+
+    // 3. Matching SEBI Rules
+    const matchedSebi = (data?.sebi_rules || []).filter(
+      (s) =>
+        s.title.toLowerCase().includes(q) ||
+        s.summary.toLowerCase().includes(q) ||
+        s.trader_impact.toLowerCase().includes(q) ||
+        s.category.toLowerCase().includes(q) ||
+        s.circular_no.toLowerCase().includes(q)
+    );
+
+    // 4. Matching Indices
+    const matchedIndices = (data?.indices || []).filter(
+      (idx) => idx.name.toLowerCase().includes(q)
+    );
+
+    // 5. Matching F&O Ban Stocks
+    const matchedBan = (data?.fo_ban_list || []).filter(
+      (b) =>
+        b.symbol.toLowerCase().includes(q) ||
+        b.company_name.toLowerCase().includes(q) ||
+        b.trader_advice.toLowerCase().includes(q)
+    );
+
+    // 6. Matching Watchlist Stocks
+    const matchedWatchlist = customWatchlist.filter(
+      (w) =>
+        w.symbol.toLowerCase().includes(q) ||
+        w.name.toLowerCase().includes(q) ||
+        w.notes.toLowerCase().includes(q)
+    );
+
+    const totalCount =
+      matchedNews.length +
+      matchedCatalysts.length +
+      matchedSebi.length +
+      matchedIndices.length +
+      matchedBan.length;
+
+    return {
+      query: searchQuery.trim(),
+      news: matchedNews,
+      catalysts: matchedCatalysts,
+      sebi: matchedSebi,
+      indices: matchedIndices,
+      banList: matchedBan,
+      watchlist: matchedWatchlist,
+      totalCount,
+    };
+  }, [searchQuery, data, customWatchlist]);
+
   // Position Size Calc Results
   const positionSizeResults = useMemo(() => {
     const riskAmount = (calcCapital * calcRiskPct) / 100;
@@ -528,8 +606,8 @@ export default function SVRAnalysisHome() {
           </div>
         </div>
 
-        {/* Global Search Bar */}
-        <div className="hidden md:flex items-center flex-1 max-w-md mx-6">
+        {/* Global Search Bar with Live Interactive Dropdown */}
+        <div className="hidden md:flex items-center flex-1 max-w-md mx-6 relative">
           <div className="relative w-full">
             <Search
               size={16}
@@ -537,21 +615,168 @@ export default function SVRAnalysisHome() {
             />
             <input
               type="text"
-              placeholder="Search stocks (e.g. RELIANCE), SEBI rules, F&O ban, news..."
+              placeholder="Search stocks (e.g. RELIANCE, WIPRO, CEO, SEBI, BAN)..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#111A2D] border border-[#1D2F4D] focus:border-blue-500 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-[#5B7193] outline-none transition"
+              onFocus={() => setIsSearchFocused(true)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsSearchFocused(true);
+              }}
+              className="w-full bg-[#111A2D] border border-[#1D2F4D] focus:border-emerald-500 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-[#5B7193] outline-none transition shadow-inner"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("");
+                  setIsSearchFocused(false);
+                }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+                title="Clear search"
               >
                 ✕
               </button>
             )}
           </div>
+
+          {/* Live Search Floating Dropdown */}
+          {searchQuery.trim().length > 0 && isSearchFocused && searchResults && (
+            <div className="absolute top-11 left-0 right-0 bg-[#0B1424] border border-[#1F365A] rounded-2xl shadow-2xl p-3 z-50 max-h-[460px] overflow-y-auto space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#162844] text-[11px]">
+                <span className="text-[#8BA0BF]">
+                  Live search for &quot;<strong className="text-white">{searchQuery}</strong>&quot;
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">
+                  {searchResults.totalCount} matches
+                </span>
+              </div>
+
+              {searchResults.totalCount === 0 ? (
+                <div className="py-6 text-center text-xs text-[#6A81A4] space-y-1">
+                  <p>No direct matches found for &quot;{searchQuery}&quot;.</p>
+                  <p className="text-[10px] text-[#556985]">
+                    Try searching: <strong>RELIANCE</strong>, <strong>WIPRO</strong>, <strong>CEO</strong>, <strong>SEBI</strong>, <strong>BAN</strong>, or <strong>NIFTY</strong>
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Matching Catalysts / CEO News */}
+                  {searchResults.catalysts.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                        <Building2 size={12} /> Company Catalysts & Leadership ({searchResults.catalysts.length})
+                      </span>
+                      {searchResults.catalysts.map((cat) => (
+                        <div
+                          key={`scat-${cat.id}`}
+                          onClick={() => {
+                            setActiveTab("catalysts");
+                            setIsSearchFocused(false);
+                          }}
+                          className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E] space-y-1"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono font-black text-cyan-300">
+                              NSE: {cat.symbol}
+                            </span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">
+                              {cat.catalyst_type}
+                            </span>
+                          </div>
+                          <p className="text-xs font-semibold text-white leading-tight">
+                            {cat.headline}
+                          </p>
+                          <p className="text-[10px] text-emerald-300 line-clamp-1">
+                            {cat.action_bias} • Support: {cat.support_level}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Matching Stock News */}
+                  {searchResults.news.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                        <Newspaper size={12} /> Stock & Market News ({searchResults.news.length})
+                      </span>
+                      {searchResults.news.slice(0, 4).map((n) => (
+                        <div
+                          key={`snews-${n.id}`}
+                          onClick={() => {
+                            setActiveTab("stocks");
+                            setIsSearchFocused(false);
+                          }}
+                          className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E] space-y-1"
+                        >
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="text-blue-400 font-semibold">{n.category}</span>
+                            <span className="text-[#657C9E] font-mono">{n.stocks_affected}</span>
+                          </div>
+                          <p className="text-xs font-bold text-white leading-snug line-clamp-2">
+                            {n.headline}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Matching SEBI Circulars */}
+                  {searchResults.sebi.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+                        <Scale size={12} /> SEBI Rules & Guidelines ({searchResults.sebi.length})
+                      </span>
+                      {searchResults.sebi.map((s) => (
+                        <div
+                          key={`ssebi-${s.id}`}
+                          onClick={() => {
+                            setActiveTab("sebi");
+                            setIsSearchFocused(false);
+                          }}
+                          className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E]"
+                        >
+                          <span className="text-[10px] text-amber-300 font-bold block">{s.category}</span>
+                          <p className="text-xs font-semibold text-white leading-tight">{s.title}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Matching F&O Ban */}
+                  {searchResults.banList.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
+                        <ShieldAlert size={12} /> F&O Ban List ({searchResults.banList.length})
+                      </span>
+                      {searchResults.banList.map((b) => (
+                        <div
+                          key={`sban-${b.id}`}
+                          onClick={() => {
+                            setActiveTab("fo_ban");
+                            setIsSearchFocused(false);
+                          }}
+                          className="p-2 rounded-xl bg-[#18121E] border border-rose-900/40 flex items-center justify-between text-xs"
+                        >
+                          <span className="font-bold text-white">{b.symbol} ({b.company_name})</span>
+                          <span className="text-rose-400 font-mono font-bold">{b.mwpl_percent} In Ban</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Mobile Search Icon Toggle */}
+        <button
+          onClick={() => setShowMobileSearch(!showMobileSearch)}
+          className="md:hidden p-2 rounded-lg bg-[#142036] text-[#9CB1D1] hover:text-white"
+          title="Search"
+        >
+          <Search size={18} />
+        </button>
 
         {/* Header Badges, Auto-Sync Status & Actions */}
         <div className="flex items-center gap-3">
@@ -593,6 +818,31 @@ export default function SVRAnalysisHome() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Search Bar Drawer */}
+      {showMobileSearch && (
+        <div className="md:hidden bg-[#0A1220] border-b border-[#182740] p-3 sticky top-[69px] z-25">
+          <div className="relative">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#657B9E]" />
+            <input
+              type="text"
+              placeholder="Search stocks (e.g. RELIANCE, WIPRO, CEO, SEBI)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#111A2D] border border-emerald-500/50 rounded-xl pl-9 pr-8 py-2.5 text-xs text-white placeholder-[#5B7193] outline-none"
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 3. APP BODY (Sidebar + Content) */}
       <div className="flex flex-1 min-h-0">
@@ -683,6 +933,152 @@ export default function SVRAnalysisHome() {
 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 p-4 lg:p-7 max-w-7xl mx-auto w-full space-y-6">
+          {/* SEARCH RESULTS SPOTLIGHT BANNER & MATCHES (Active when searching) */}
+          {searchQuery.trim().length > 0 && searchResults && (
+            <div className="bg-[#0B1527] border-2 border-emerald-500/40 rounded-2xl p-5 space-y-5 shadow-2xl animate-in fade-in duration-200">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#1A2E4E]">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                    <Search size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                      Search Results for &ldquo;{searchQuery}&rdquo;
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/30">
+                        {searchResults.totalCount} matches found
+                      </span>
+                    </h2>
+                    <p className="text-xs text-[#7B92B5]">
+                      Results matching stock symbols, company disclosures, news headlines, and SEBI circulars
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="px-3 py-1.5 rounded-xl bg-[#14233C] hover:bg-[#1F365C] text-xs font-semibold text-rose-300 hover:text-white transition flex items-center gap-1.5 border border-[#21385E]"
+                >
+                  ✕ Clear Search
+                </button>
+              </div>
+
+              {searchResults.totalCount === 0 ? (
+                <div className="py-8 text-center text-xs text-[#7B92B5] space-y-2">
+                  <p className="text-sm font-semibold text-white">No results found for &ldquo;{searchQuery}&rdquo;</p>
+                  <p>
+                    Try searching: <strong>RELIANCE</strong>, <strong>WIPRO</strong>, <strong>TATAMOTORS</strong>, <strong>INFY</strong>, <strong>BEL</strong>, <strong>CEO</strong>, <strong>SEBI</strong>, or <strong>BAN</strong>.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Matching Company Catalysts & CEO Alerts */}
+                  {searchResults.catalysts.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                        <Building2 size={14} /> Company Catalysts & Leadership Changes ({searchResults.catalysts.length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        {searchResults.catalysts.map((cat) => (
+                          <div
+                            key={`main-scat-${cat.id}`}
+                            className="p-4 rounded-xl bg-[#101C30] border border-emerald-500/30 space-y-2.5 shadow"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono font-black text-xs text-cyan-300 bg-[#162740] px-2.5 py-0.5 rounded border border-[#233C61]">
+                                NSE: {cat.symbol}
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                {cat.catalyst_type}
+                              </span>
+                            </div>
+                            <h4 className="text-sm font-bold text-white leading-snug">
+                              {cat.headline}
+                            </h4>
+                            <p className="text-xs text-[#8BA0C0] line-clamp-2">
+                              {cat.details}
+                            </p>
+                            <div className="bg-[#14233A] p-2.5 rounded-lg border-l-2 border-emerald-400 text-xs text-emerald-200">
+                              <strong>Trader Edge:</strong> {cat.trader_advantage}
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] font-mono text-[#7188AA] pt-1">
+                              <span>Support: <strong className="text-emerald-400">{cat.support_level}</strong></span>
+                              <span>Resistance: <strong className="text-rose-400">{cat.resistance_level}</strong></span>
+                              <button
+                                onClick={() => setActiveTab("catalysts")}
+                                className="text-blue-400 hover:text-white font-sans font-bold"
+                              >
+                                View Blueprint →
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching Live Stock News */}
+                  {searchResults.news.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-2">
+                        <Newspaper size={14} /> Stock & Market News ({searchResults.news.length})
+                      </h3>
+                      <div className="space-y-2.5">
+                        {searchResults.news.map((n) => (
+                          <div
+                            key={`main-snews-${n.id}`}
+                            className="p-3.5 rounded-xl bg-[#101C30] border border-[#1A2E4E] hover:border-blue-500/40 transition space-y-2"
+                          >
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                                  {n.category}
+                                </span>
+                                {n.stocks_affected && (
+                                  <span className="font-mono text-[10px] font-bold text-cyan-300">
+                                    {n.stocks_affected}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-[#6981A4] font-mono">
+                                {formatIST(n.published_at)}
+                              </span>
+                            </div>
+                            <h4 className="text-xs sm:text-sm font-bold text-white">{n.headline}</h4>
+                            <p className="text-xs text-[#8BA0BF]">{n.summary}</p>
+                            {n.actionable_takeaway && (
+                              <div className="text-[11px] text-cyan-200 bg-[#14233A] p-2 rounded border-l-2 border-cyan-400">
+                                <strong>Takeaway:</strong> {n.actionable_takeaway}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching SEBI Guidelines */}
+                  {searchResults.sebi.length > 0 && (
+                    <div className="space-y-2.5">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                        <Scale size={14} /> Regulatory & SEBI Circulars ({searchResults.sebi.length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {searchResults.sebi.map((s) => (
+                          <div
+                            key={`main-ssebi-${s.id}`}
+                            className="p-3 rounded-xl bg-[#101C30] border border-[#1A2E4E] space-y-1"
+                          >
+                            <span className="text-[10px] font-bold text-amber-300 uppercase">{s.category}</span>
+                            <h4 className="text-xs font-bold text-white">{s.title}</h4>
+                            <p className="text-[11px] text-[#8BA0BF] line-clamp-2">{s.summary}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           {/* Breaking News Banner (If Breaking News exists) */}
           {data?.news?.some((n) => n.is_breaking) && (
             <div className="bg-gradient-to-r from-rose-950/60 via-[#1C1420] to-[#121A2C] border border-rose-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
