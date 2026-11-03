@@ -117,6 +117,23 @@ interface EventItem {
   is_demo: boolean;
 }
 
+interface CompanyCatalyst {
+  id: number;
+  symbol: string;
+  company_name: string;
+  catalyst_type: string;
+  headline: string;
+  details: string;
+  trader_advantage: string;
+  action_bias: string;
+  support_level: string;
+  resistance_level: string;
+  stop_loss_advice: string;
+  source: string;
+  source_url: string;
+  timestamp: string;
+}
+
 interface DashboardData {
   platform_name: string;
   tagline: string;
@@ -150,12 +167,14 @@ interface DashboardData {
   fii_dii: FiiDiiInfo;
   fo_ban_list: FoBanItem[];
   events: EventItem[];
+  company_catalysts?: CompanyCatalyst[];
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
 const NAV_ITEMS = [
   { id: "overview", label: "Dashboard Overview", icon: LayoutDashboard },
+  { id: "catalysts", label: "Company Catalysts & CEO Alerts", icon: Building2, badge: "Edge" },
   { id: "stocks", label: "NSE & BSE Stock News", icon: Newspaper, badge: "Live" },
   { id: "sebi", label: "SEBI Rules & Guidelines", icon: Scale, badge: "Crucial" },
   { id: "current_affairs", label: "Current Affairs & Macro", icon: Landmark },
@@ -178,6 +197,7 @@ export default function SVRAnalysisHome() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedSentiment, setSelectedSentiment] = useState("All");
+  const [selectedCatalystType, setSelectedCatalystType] = useState("All");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [savedNewsIds, setSavedNewsIds] = useState<number[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -1009,8 +1029,48 @@ export default function SVRAnalysisHome() {
                   </div>
                 </div>
 
-                {/* Right Sidebar: Crucial SEBI Guidelines & Pre-Market Setup */}
+                {/* Right Sidebar: Company Catalysts, SEBI Guidelines & Pre-Market Setup */}
                 <div className="space-y-6">
+                  {/* Company Leadership & Catalyst Spotlight */}
+                  <div className="bg-[#0D1525] border border-emerald-500/30 rounded-2xl p-5 space-y-3.5 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Building2 size={16} className="text-emerald-400" /> Company Catalyst Radar
+                      </h2>
+                      <button
+                        onClick={() => setActiveTab("catalysts")}
+                        className="text-xs text-emerald-400 hover:text-white font-semibold"
+                      >
+                        View All
+                      </button>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {(data?.company_catalysts || INITIAL_MARKET_DATA.company_catalysts || []).slice(0, 2).map((cat) => (
+                        <div
+                          key={cat.id}
+                          onClick={() => setActiveTab("catalysts")}
+                          className="p-3 rounded-xl bg-[#121E33] border border-[#1C2E4C] hover:border-emerald-500/40 cursor-pointer transition space-y-1"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black font-mono text-cyan-300">
+                              {cat.symbol}
+                            </span>
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                              {cat.catalyst_type}
+                            </span>
+                          </div>
+                          <h4 className="text-xs font-bold text-white leading-snug line-clamp-1">
+                            {cat.headline}
+                          </h4>
+                          <p className="text-[10px] text-emerald-300 leading-tight line-clamp-1">
+                            <strong>Edge:</strong> {cat.action_bias}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* SEBI Rules Highlights */}
                   <div className="bg-[#0D1525] border border-[#182842] rounded-2xl p-5 space-y-4">
                     <div className="flex items-center justify-between">
@@ -1089,6 +1149,158 @@ export default function SVRAnalysisHome() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW: COMPANY CATALYSTS & CEO / LEADERSHIP ALERTS */}
+          {activeTab === "catalysts" && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-emerald-950/40 via-[#101C30] to-[#0D1525] border border-emerald-500/30 rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                  <Building2 size={18} />
+                  <span>The Trader's Edge: Material Corporate Events & Leadership Tracker</span>
+                </div>
+                <h2 className="text-xl font-black text-white mt-1">
+                  Company Catalysts, CEO Exits & High-Impact Disclosures
+                </h2>
+                <p className="text-xs text-[#95AAC9] mt-1.5 leading-relaxed max-w-3xl">
+                  When a company announces an unexpected CEO resignation, CFO departure, auditor resignation,
+                  multibillion-dollar order win, or promoter open-market purchase, stock prices experience dramatic
+                  intraday moves. Here are the latest verified corporate filings paired with tactical trade blueprints.
+                </p>
+
+                {/* Filter Sub-categories */}
+                <div className="flex items-center gap-2 overflow-x-auto mt-4 pt-3 border-t border-[#1C3252] scrollbar-none">
+                  {[
+                    "All",
+                    "CEO & Leadership",
+                    "Top Management",
+                    "Major Order Win",
+                    "Auditor",
+                    "Promoter",
+                    "Demerger"
+                  ].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setSelectedCatalystType(filter)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                        selectedCatalystType === filter
+                          ? "bg-emerald-500 text-black shadow-md font-bold"
+                          : "bg-[#14233C] text-[#93A7C7] hover:bg-[#1A2E4E] hover:text-white"
+                      }`}
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Catalyst Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(data?.company_catalysts || INITIAL_MARKET_DATA.company_catalysts || [])
+                  .filter((item) =>
+                    selectedCatalystType === "All" ||
+                    item.catalyst_type.toLowerCase().includes(selectedCatalystType.toLowerCase())
+                  )
+                  .map((item) => (
+                    <article
+                      key={item.id}
+                      className="bg-[#0D1525] border border-[#182842] hover:border-emerald-500/40 rounded-2xl p-5 space-y-4 transition flex flex-col justify-between shadow-sm"
+                    >
+                      <div className="space-y-3">
+                        {/* Header Badges */}
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-black text-sm text-cyan-300 bg-[#122238] px-2.5 py-1 rounded-lg border border-[#203B61]">
+                              NSE: {item.symbol}
+                            </span>
+                            <span className="text-xs text-[#89A0C3] font-medium hidden sm:inline">
+                              {item.company_name}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                                item.action_bias.includes("Strong Bullish") || item.action_bias.includes("Bullish")
+                                  ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                  : item.action_bias.includes("Bearish")
+                                  ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                  : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                              }`}
+                            >
+                              {item.action_bias}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Catalyst Type Badge */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                            ⚡ {item.catalyst_type}
+                          </span>
+                          <span className="text-[10px] text-[#6981A4] font-mono">
+                            {formatIST(item.timestamp)}
+                          </span>
+                        </div>
+
+                        <h3 className="text-sm sm:text-base font-bold text-white leading-snug">
+                          {item.headline}
+                        </h3>
+
+                        <p className="text-xs text-[#95AAC9] leading-relaxed">
+                          {item.details}
+                        </p>
+                      </div>
+
+                      {/* The Trader's Advantage Box */}
+                      <div className="space-y-3 pt-3 border-t border-[#172740]">
+                        <div className="bg-[#101D33] border-l-4 border-emerald-400 rounded-r-xl p-3.5 space-y-2">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
+                            <Zap size={15} />
+                            <span>Trader's Strategic Advantage & Decision Blueprint:</span>
+                          </div>
+                          <p className="text-xs text-[#C6DCFA] leading-relaxed">
+                            {item.trader_advantage}
+                          </p>
+                        </div>
+
+                        {/* Key Action Levels (Support, Resistance, Stop Loss) */}
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+                          <div className="bg-[#121E33] p-2 rounded-xl border border-[#1C3050]">
+                            <span className="text-[10px] text-[#7188AA] block font-sans">Support</span>
+                            <span className="font-bold text-emerald-400">{item.support_level}</span>
+                          </div>
+                          <div className="bg-[#121E33] p-2 rounded-xl border border-[#1C3050]">
+                            <span className="text-[10px] text-[#7188AA] block font-sans">Resistance</span>
+                            <span className="font-bold text-rose-400">{item.resistance_level}</span>
+                          </div>
+                          <div className="bg-[#121E33] p-2 rounded-xl border border-[#1C3050]">
+                            <span className="text-[10px] text-[#7188AA] block font-sans">Stop Advice</span>
+                            <span className="font-bold text-amber-300 text-[10px] block truncate" title={item.stop_loss_advice}>
+                              Strict Risk
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Source Disclosure Link */}
+                        <div className="flex items-center justify-between text-[11px] text-[#657E9E] pt-1">
+                          <span className="truncate max-w-[220px]">
+                            Source: <strong>{item.source}</strong>
+                          </span>
+                          <a
+                            href={item.source_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 flex-shrink-0"
+                          >
+                            Regulation 30 Filing <ExternalLink size={12} />
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
               </div>
             </div>
           )}
