@@ -1,0 +1,433 @@
+// Comprehensive Initial Intelligence Data for SVR Analysis (Works Standalone & on GitHub Pages)
+
+export const INITIAL_MARKET_DATA = {
+  platform_name: "SVR Analysis",
+  tagline: "India's 100% Free Stock Market Intelligence & News Hub for Traders",
+  market_status: "Market Live & Intelligence Active",
+  updated_at: new Date().toISOString(),
+  indices: [
+    { name: "NIFTY 50", value: "24,840.50", change: "+82.15 (+0.33%)", tone: "up", high: "24,895.20", low: "24,760.10" },
+    { name: "BANK NIFTY", value: "52,280.00", change: "+210.40 (+0.40%)", tone: "up", high: "52,450.00", low: "52,050.00" },
+    { name: "SENSEX", value: "81,420.75", change: "+265.30 (+0.33%)", tone: "up", high: "81,590.00", low: "81,210.00" },
+    { name: "FIN NIFTY", value: "23,940.00", change: "+65.20 (+0.27%)", tone: "up", high: "24,010.00", low: "23,870.00" },
+    { name: "INDIA VIX", value: "13.85", change: "-0.46 (-3.21%)", tone: "down", high: "14.40", low: "13.70" }
+  ],
+  global_cues: [
+    { name: "GIFT NIFTY", value: "24,895.00", change: "+28.50 (+0.11%)", tone: "up" },
+    { name: "BRENT CRUDE", value: "$73.60/bbl", change: "-1.80 (-2.38%)", tone: "down" },
+    { name: "USD / INR", value: "84.15", change: "-0.04 (-0.05%)", tone: "up" },
+    { name: "US 10-YR YIELD", value: "4.22%", change: "-0.03 (-0.71%)", tone: "down" },
+    { name: "DXY (DOLLAR)", value: "104.10", change: "+0.08 (+0.08%)", tone: "neutral" },
+    { name: "GOLD (MCX)", value: "₹77,450/10g", change: "+210 (+0.27%)", tone: "up" }
+  ],
+  market_sentiment: {
+    mood: "Cautiously Bullish",
+    score: 68,
+    advances: 1420,
+    declines: 980,
+    pcr_nifty: 1.15,
+    fii_dii_signal: "Positive Net Inflow"
+  },
+  news: [
+    {
+      id: 1,
+      headline: "SEBI Issues New Advisory on F&O Weekly Expiry Rationalization Across NSE & BSE",
+      summary: "In compliance with SEBI's benchmark derivative circular, NSE and BSE have discontinued overlapping mid-week derivative expiries. NSE hosts Nifty 50 weekly expiry on Thursday, while BSE hosts Sensex weekly expiry on Friday. Bank Nifty and FinNifty have transitioned to monthly expiries.",
+      category: "SEBI Rules",
+      subcategory: "Derivatives Regulatory Update",
+      stocks_affected: "NIFTY, BANKNIFTY, SENSEX",
+      actionable_takeaway: "Intraday option sellers must rebalance margin allocations. Concentration of weekly option liquidity is now channelled into Nifty on Thursdays and Sensex on Fridays.",
+      source_name: "SEBI & Exchange Circulars",
+      source_url: "https://www.sebi.gov.in/",
+      published_at: new Date(Date.now() - 15 * 60000).toISOString(),
+      impact_level: "High",
+      sentiment: "Neutral",
+      is_breaking: true,
+      is_demo: false
+    },
+    {
+      id: 2,
+      headline: "SEBI Mandates 2% Additional Extreme Loss Margin on Index Options on Expiry Day",
+      summary: "To curtail excessive volatility and speculative zero-hero bets in the final hour of expiry, SEBI has implemented an additional 2% ELM (Extreme Loss Margin) for all short option positions on expiry day.",
+      category: "SEBI Rules",
+      subcategory: "Margin Requirement",
+      stocks_affected: "NIFTY, BANKNIFTY",
+      actionable_takeaway: "Intraday option writers/sellers must allocate 15-20% higher margin buffer for expiry day hero-or-zero strategies to avoid auto-square-off by risk management systems (RMS).",
+      source_name: "SEBI Department of Market Regulation",
+      source_url: "https://www.sebi.gov.in/",
+      published_at: new Date(Date.now() - 90 * 60000).toISOString(),
+      impact_level: "High",
+      sentiment: "Bearish",
+      is_breaking: false,
+      is_demo: false
+    },
+    {
+      id: 3,
+      headline: "Exchanges Add Bandhan Bank and SAIL into F&O Ban Period; 3 Stocks Near Threshold",
+      summary: "NSE has placed Bandhan Bank and Steel Authority of India (SAIL) under the F&O ban period after open interest breached 95% of the Market Wide Position Limit (MWPL). Meanwhile, Manappuram Finance (91.2% MWPL) and GNFC (89.8% MWPL) have been placed on high watch.",
+      category: "F&O",
+      subcategory: "F&O Ban List",
+      stocks_affected: "BANDHANBNK, SAIL, MANAPPURAM, GNFC",
+      actionable_takeaway: "Do NOT initiate fresh long or short derivative positions in Bandhan Bank or SAIL today. Fresh entries trigger immediate exchange penalties (₹1 Lakh). Day traders can only square off existing contracts.",
+      source_name: "NSE Derivatives Department",
+      source_url: "https://www.nseindia.com/",
+      published_at: new Date(Date.now() - 130 * 60000).toISOString(),
+      impact_level: "High",
+      sentiment: "Volatile",
+      is_breaking: true,
+      is_demo: false
+    },
+    {
+      id: 4,
+      headline: "Reliance Industries Secures Major Green Hydrogen EPC Milestone, Q3 Petchem Margins Expand",
+      summary: "Reliance Industries (RIL) announced the commissioning of its advanced electrolyzer gigafactory module at Jamnagar. Concurrently, Singapore gross refining margins (GRM) rebounded to $7.8/bbl, providing strong earnings tailwinds for RIL's O2C division.",
+      category: "NSE/BSE Stocks",
+      subcategory: "Corporate Developments",
+      stocks_affected: "RELIANCE",
+      actionable_takeaway: "RIL is trading above key pivot resistance at 2,980. Intraday momentum favours long setups with trailing stop loss at 2,945; watch for potential heavy index weighting pull on Nifty 50.",
+      source_name: "BSE Corporate Disclosures",
+      source_url: "https://www.bseindia.com/",
+      published_at: new Date(Date.now() - 185 * 60000).toISOString(),
+      impact_level: "High",
+      sentiment: "Bullish",
+      is_breaking: false,
+      is_demo: false
+    },
+    {
+      id: 5,
+      headline: "Tata Motors Commercial Vehicles & Passenger Vehicles Demerger Receives NCLT Clearance",
+      summary: "Tata Motors' proposal to split into two separate listed entities—one housing the commercial vehicle (CV) business and the other housing passenger vehicles (PV, EV, JLR)—has received formal approval from the National Company Law Tribunal (NCLT).",
+      category: "NSE/BSE Stocks",
+      subcategory: "Corporate Restructuring",
+      stocks_affected: "TATAMOTORS, TATAMTRDVR",
+      actionable_takeaway: "Value-unlocking catalyst for long-term investors and swing traders. Track 980-1,010 consolidation breakout; options chain reflects strong Put writing at 950 strike.",
+      source_name: "Exchange Filings & NCLT Order",
+      source_url: "https://www.nseindia.com/",
+      published_at: new Date(Date.now() - 260 * 60000).toISOString(),
+      impact_level: "High",
+      sentiment: "Bullish",
+      is_breaking: false,
+      is_demo: false
+    },
+    {
+      id: 6,
+      headline: "HDFC Bank Reports 16.4% YoY Advance Growth; NIM Stabilizes at 3.55%",
+      summary: "India's largest private lender HDFC Bank published quarterly business operational updates showing gross advances rising 16.4% YoY to ₹25.8 Lakh Crore. Deposit mobilization accelerated at 18.2% YoY, steadily improving the credit-to-deposit (LDR) ratio.",
+      category: "NSE/BSE Stocks",
+      subcategory: "Quarterly Results & Metrics",
+      stocks_affected: "HDFCBANK",
+      actionable_takeaway: "High institutional buying interest expected in morning trade. Strong support established at 1,720. Key resistance at 1,765; a breakout above 1,765 could propel Bank Nifty past 52,500.",
+      source_name: "Exchange Business Update",
+      source_url: "https://www.nseindia.com/",
+      published_at: new Date(Date.now() - 300 * 60000).toISOString(),
+      impact_level: "High",
+      sentiment: "Bullish",
+      is_breaking: false,
+      is_demo: false
+    },
+    {
+      id: 7,
+      headline: "L&T Bags Mega ₹8,400 Crore Hydrocarbon and High-Speed Rail Infrastructure Orders",
+      summary: "Larsen & Toubro's (L&T) Energy CarbonLite and Heavy Civil Infrastructure verticals have secured domestic and Middle East turnkey execution contracts worth ₹8,400 Crore, taking its total order book past ₹5.2 Lakh Crore.",
+      category: "NSE/BSE Stocks",
+      subcategory: "Order Wins",
+      stocks_affected: "LT",
+      actionable_takeaway: "Capital goods sector momentum remains robust. Watch for morning opening gap-up; intraday dip-buying strategy favoured near VWAP and 3,680 support zone.",
+      source_name: "L&T Press Release / NSE",
+      source_url: "https://www.nseindia.com/",
+      published_at: new Date(Date.now() - 400 * 60000).toISOString(),
+      impact_level: "Medium",
+      sentiment: "Bullish",
+      is_breaking: false,
+      is_demo: false
+    },
+    {
+      id: 8,
+      headline: "Infosys Announces $2.5B Strategic AI Transformation Deal with European Telecom Major",
+      summary: "Infosys has signed an expansive multi-year digital and Generative AI transformation agreement with a European telecom consortium. The deal includes cloud migration, enterprise AI agent deployment, and legacy application modernization.",
+      category: "NSE/BSE Stocks",
+      subcategory: "IT Sector Deals",
+      stocks_affected: "INFY, TCS, WIPRO",
+      actionable_takeaway: "IT index is poised for short-covering rally. Watch INFY resistance at 1,890. If it breaks, Nifty IT can add 300+ points.",
+      source_name: "Company Filing",
+      source_url: "https://www.nseindia.com/",
+      published_at: new Date(Date.now() - 480 * 60000).toISOString(),
+      impact_level: "High",
+      sentiment: "Bullish",
+      is_breaking: false,
+      is_demo: false
+    },
+    {
+      id: 9,
+      headline: "RBI Monetary Policy Committee Keeps Repo Rate at 6.50%; Stance Maintained as Neutral",
+      summary: "The Reserve Bank of India MPC voted unanimously to keep the policy repo rate unchanged at 6.50% while projecting FY26 real GDP growth at 7.2%. Governor highlighted food inflation persistence while systemic banking liquidity remains comfortable.",
+      category: "RBI & Macro",
+      subcategory: "Monetary Policy",
+      stocks_affected: "BANKNIFTY, NIFTYFIN, SBIN, ICICIBANK",
+      actionable_takeaway: "Status quo repo rate removes immediate interest rate cut euphoria but provides rate stability. Banking stocks likely to trade in a defined range (Bank Nifty 51,800 - 52,600).",
+      source_name: "Reserve Bank of India Press Release",
+      source_url: "https://www.rbi.org.in/",
+      published_at: new Date(Date.now() - 570 * 60000).toISOString(),
+      impact_level: "High",
+      sentiment: "Neutral",
+      is_breaking: false,
+      is_demo: false
+    },
+    {
+      id: 10,
+      headline: "Brent Crude Drops Below $74/bbl on OPEC+ Supply Quotas and Weak Chinese Industrial Demand",
+      summary: "International Brent Crude benchmark fell 2.4% to $73.60 per barrel following inventory builds in Cushing and subdued factory gate numbers across East Asia. The decline directly relieves input cost pressures for Indian downstream OMCs, paints, and tyre manufacturers.",
+      category: "Commodities & Currency",
+      subcategory: "Global Energy",
+      stocks_affected: "BPCL, IOC, HPCL, ASIANPAINT, BERGEPAINT, MRF",
+      actionable_takeaway: "Bullish intraday and positional trigger for Oil Marketing Companies (OMCs) and Paint stocks. Margins for BPCL/IOC expand by ₹1.2-1.8/litre at sub-$75 crude.",
+      source_name: "MCX / Reuters Energy Desk",
+      source_url: "https://www.mcxindia.com/",
+      published_at: new Date(Date.now() - 660 * 60000).toISOString(),
+      impact_level: "Medium",
+      sentiment: "Bullish",
+      is_breaking: false,
+      is_demo: false
+    },
+    {
+      id: 11,
+      headline: "Union Budget Review: Revised STT on Futures (0.02%) and Options (0.10%) Impact on Scalping",
+      summary: "A comprehensive trader analysis on the hike in Securities Transaction Tax (STT) on derivative trades. STT on futures increased from 0.0125% to 0.02% of trade value, while STT on option premiums increased from 0.0625% to 0.10%.",
+      category: "Current Affairs",
+      subcategory: "Tax & Trading Economics",
+      stocks_affected: "NIFTY, BANKNIFTY, BSE, MCX, CDSL",
+      actionable_takeaway: "High-frequency scalpers capturing 2-3 points need wider profit targets (minimum 4-5 points in Nifty) to comfortably cover friction, STT, exchange turnover fees, and GST.",
+      source_name: "Ministry of Finance & SVR Desk",
+      source_url: "https://www.finmin.nic.in/",
+      published_at: new Date(Date.now() - 780 * 60000).toISOString(),
+      impact_level: "High",
+      sentiment: "Bearish",
+      is_breaking: false,
+      is_demo: false
+    }
+  ],
+  sebi_rules: [
+    {
+      id: 1,
+      title: "SEBI 6-Point Index Derivative Framework: Lot Size & Expiry Overhaul",
+      circular_no: "SEBI/HO/MRD/MRD-PoD-2/P/CIR/2024/134",
+      category: "F&O Framework",
+      effective_date: "Phase-wise from Nov 20, 2024 / Q1 2025",
+      summary: "SEBI introduced stringent measures to protect retail traders in index options, including hiking minimum contract value to ₹15-20 Lakhs, restricting exchanges to one benchmark weekly expiry each, and charging upfront option buyer premium.",
+      trader_impact: "Traders need higher capital to trade index lots (e.g., Nifty lot size revised, Bank Nifty lot size revised). Intraday option buyers must maintain 100% upfront premium with no broker credit. Calendar spread margin relief is abolished on expiry day contracts.",
+      official_link: "https://www.sebi.gov.in/",
+      status: "Active"
+    },
+    {
+      id: 2,
+      title: "Peak Margin Reporting and Intraday Leverage Restrictions",
+      circular_no: "SEBI/HO/MIRSD/DOP/CIR/P/2020/143",
+      category: "Margin Rules",
+      effective_date: "Fully Enforced (100% Peak Margin)",
+      summary: "Brokers must collect 100% of upfront VaR + ELM margin for intraday equity trades and SPAN + Exposure margin for F&O trades. Clearing corporations take 4 random snapshots during trading hours to verify margin compliance.",
+      trader_impact: "No broker can offer arbitrary 20x or 50x intraday leverage. Retail day traders must maintain full regulatory margin. Margin shortfall penalties are levied directly if intraday peak positions exceed available ledger collateral.",
+      official_link: "https://www.sebi.gov.in/",
+      status: "Active"
+    },
+    {
+      id: 3,
+      title: "Additional Surveillance Measure (ASM) & Enhanced Surveillance Measure (ESM)",
+      circular_no: "NSE/SURV/56891 & BSE/SURV/2023/15",
+      category: "ASM/GSM Surveillance",
+      effective_date: "Regular Bi-weekly Revision",
+      summary: "SEBI and Exchanges monitor abnormal price volatility, high client concentration, and high PE variation. Stocks placed in Long-term or Short-term ASM Stage 1/2 face 100% margin requirements and 5% circuit limits.",
+      trader_impact: "Stocks entering ASM/ESM cannot be traded on MIS (intraday leverage) and require 100% cash upfront. ESM Stage-2 stocks trade only through periodic call auction sessions with 2% circuit filters. Check list daily before placing momentum breakout trades.",
+      official_link: "https://www.nseindia.com/regulations/additional-surveillance-measure",
+      status: "Active"
+    },
+    {
+      id: 4,
+      title: "F&O Ban Period Rules: 95% MWPL Breach and Unwinding Norms",
+      circular_no: "SEBI/HO/MRD/DP/CIR/P/2016/135",
+      category: "F&O Framework",
+      effective_date: "Active Daily Enforcement",
+      summary: "When aggregate open interest in derivative contracts of a stock crosses 95% of Market Wide Position Limit (MWPL), the stock enters F&O ban. New positions are strictly prohibited.",
+      trader_impact: "Traders can only unwind/reduce existing open positions. Any attempt to initiate new buy/sell fresh futures or options contracts attracts exchange penalty (₹1 Lakh or 1% of value). Stock exits ban only when MWPL falls below 80%.",
+      official_link: "https://www.nseindia.com/products-services/equity-derivatives-market-wide-position-limit",
+      status: "Active"
+    },
+    {
+      id: 5,
+      title: "Rollout of Optional T+0 Instant Settlement Cycle",
+      circular_no: "SEBI/HO/MRD/MRD-PoD-2/P/CIR/2024/25",
+      category: "Settlement",
+      effective_date: "Phase 1 Live for Top 25/50 Liquid Stocks",
+      summary: "In addition to standard T+1 rolling settlement, SEBI introduced same-day T+0 settlement where funds and securities are settled by 4:30 PM on the transaction date for designated scrips.",
+      trader_impact: "Traders selling shares under T+0 obtain immediate 100% payout liquidity within hours without waiting for next day. No counterparty risk, enabling faster capital turnaround between cash equity trades and F&O deployment.",
+      official_link: "https://www.sebi.gov.in/",
+      status: "Active"
+    },
+    {
+      id: 6,
+      title: "Mandatory Two-Factor Authentication (2FA) & Algo Trading Guidelines",
+      circular_no: "SEBI/HO/MIRSD/MIRSD-PoD-1/P/CIR/2022/153",
+      category: "Algorithmic Trading",
+      effective_date: "Mandatory Active",
+      summary: "All trading members must enforce TOTP/Biometric 2FA for web/mobile login. API trading requires unique broker-approved vendor tags, with automated kill switches and order-to-trade ratio (OTR) checks.",
+      trader_impact: "Retail traders using Python/Webhook execution bots must authenticate daily with API keys and TOTP. Strict OTR thresholds prevent high-frequency spam orders, safeguarding retail order book execution from phantom quotes.",
+      official_link: "https://www.sebi.gov.in/",
+      status: "Active"
+    }
+  ],
+  premarket: [
+    {
+      id: 1,
+      index_name: "NIFTY 50",
+      cmp: "24,840.50",
+      trend: "Mildly Bullish / Buy on Dips",
+      pivot: "24,810.00",
+      support_1: "24,740.00",
+      support_2: "24,650.00",
+      resistance_1: "24,930.00",
+      resistance_2: "25,050.00",
+      day_bias: "Index is maintaining position above its 20-EMA on the hourly chart. GIFT Nifty indicates flat to mild positive opening (+28 pts). Long setups valid above 24,810 with target 24,930.",
+      key_trigger: "Sustained trading above 24,850 will trigger short covering in 24,900 CE writers."
+    },
+    {
+      id: 2,
+      index_name: "BANK NIFTY",
+      cmp: "52,280.00",
+      trend: "Rangebound / Consolidation",
+      pivot: "52,150.00",
+      support_1: "51,800.00",
+      support_2: "51,450.00",
+      resistance_1: "52,550.00",
+      resistance_2: "52,900.00",
+      day_bias: "Private banks show strong resilience led by HDFC Bank and ICICI Bank. Crucial support at 51,800. Resistance at 52,550 where highest open interest is concentrated.",
+      key_trigger: "HDFC Bank quarterly advance metrics provide morning support; break of 52,550 needed for trend continuation."
+    },
+    {
+      id: 3,
+      index_name: "FIN NIFTY",
+      cmp: "23,940.00",
+      trend: "Neutral to Positive",
+      pivot: "23,900.00",
+      support_1: "23,780.00",
+      support_2: "23,620.00",
+      resistance_1: "24,080.00",
+      resistance_2: "24,200.00",
+      day_bias: "NBFCs (Bajaj Finance, Cholamandalam) seeing fresh accumulation. Safe trade is to buy near S1 (23,780) with a 40-point stop loss.",
+      key_trigger: "Bajaj Finance Q3 AUM numbers and bond yield stability."
+    },
+    {
+      id: 4,
+      index_name: "INDIA VIX",
+      cmp: "13.85",
+      trend: "Cooling Down (-3.2%)",
+      pivot: "14.10",
+      support_1: "13.20",
+      support_2: "12.50",
+      resistance_1: "14.80",
+      resistance_2: "15.60",
+      day_bias: "Sub-14 VIX indicates low fear premium and favouring option sellers. Option premiums will decay rapidly during mid-session sideways consolidation.",
+      key_trigger: "Watch out if VIX spikes above 15.00, which would signal sudden intraday hedging."
+    }
+  ],
+  fii_dii: {
+    trade_date: "Previous Trading Session",
+    fii_cash_net: "+₹1,425.80 Cr",
+    dii_cash_net: "+₹2,180.45 Cr",
+    fii_index_futures: "+₹890.10 Cr (Net Long 56%)",
+    fii_stock_futures: "+₹1,240.50 Cr",
+    verdict: "Bullish Co-ordinated Inflows (Both FII & DII Net Buyers)"
+  },
+  fo_ban_list: [
+    {
+      id: 1,
+      symbol: "BANDHANBNK",
+      company_name: "Bandhan Bank Limited",
+      mwpl_percent: "97.4%",
+      status: "In Ban Period",
+      trader_advice: "DO NOT initiate fresh buy/sell F&O positions. Only exit/square-off allowed. Fresh orders attract Rs 1 Lakh regulatory penalty."
+    },
+    {
+      id: 2,
+      symbol: "SAIL",
+      company_name: "Steel Authority of India Ltd",
+      mwpl_percent: "96.2%",
+      status: "In Ban Period",
+      trader_advice: "Entered ban period today as cumulative OI exceeded 95%. Intraday traders can trade in equity cash segment only."
+    },
+    {
+      id: 3,
+      symbol: "MANAPPURAM",
+      company_name: "Manappuram Finance Ltd",
+      mwpl_percent: "92.6%",
+      status: "Near Ban Threshold (Watch)",
+      trader_advice: "Close to 95% threshold. Highly vulnerable to entering ban by tomorrow if fresh open interest builds up."
+    },
+    {
+      id: 4,
+      symbol: "GNFC",
+      company_name: "Gujarat Narmada Valley Fertilizers",
+      mwpl_percent: "89.8%",
+      status: "Near Ban Threshold (Watch)",
+      trader_advice: "High MWPL saturation. Exercise caution when carrying overnight derivative positions."
+    },
+    {
+      id: 5,
+      symbol: "HINDCOPPER",
+      company_name: "Hindustan Copper Limited",
+      mwpl_percent: "78.2%",
+      status: "Exited Ban",
+      trader_advice: "Successfully exited ban period after open interest dropped below 80% MWPL. Normal trading resumed."
+    }
+  ],
+  events: [
+    {
+      id: 1,
+      title: "RBI Monetary Policy Committee (MPC) Minutes Release",
+      category: "RBI Policy",
+      country: "India",
+      event_time: new Date(Date.now() + 2 * 86400000).toISOString(),
+      importance: "High",
+      description: "Detailed record of voting and commentary from MPC members on inflation trajectory and stance.",
+      is_demo: false
+    },
+    {
+      id: 2,
+      title: "India CPI Inflation (Consumer Price Index) Data Release",
+      category: "Economic",
+      country: "India",
+      event_time: new Date(Date.now() + 4 * 86400000).toISOString(),
+      importance: "High",
+      description: "Headline retail inflation figures (MoM/YoY). Expected at 4.75% vs previous 5.10%. Key for interest rate expectations.",
+      is_demo: false
+    },
+    {
+      id: 3,
+      title: "US Federal Open Market Committee (FOMC) Interest Rate Decision",
+      category: "Economic",
+      country: "United States",
+      event_time: new Date(Date.now() + 6 * 86400000).toISOString(),
+      importance: "High",
+      description: "US Fed benchmark interest rate announcement and press conference by Chairman Jerome Powell.",
+      is_demo: false
+    },
+    {
+      id: 4,
+      title: "Weekly NSE Nifty 50 Derivative Expiry",
+      category: "Expiry",
+      country: "India",
+      event_time: new Date(Date.now() + 1 * 86400000).toISOString(),
+      importance: "High",
+      description: "Weekly options expiry on NSE. High volatility expected in final 90 minutes (2:00 PM - 3:30 PM).",
+      is_demo: false
+    },
+    {
+      id: 5,
+      title: "Weekly BSE Sensex Derivative Expiry",
+      category: "Expiry",
+      country: "India",
+      event_time: new Date(Date.now() + 2 * 86400000).toISOString(),
+      importance: "High",
+      description: "BSE Sensex weekly contracts expiry. High gamma risk for out-of-the-money option strikes.",
+      is_demo: false
+    }
+  ]
+};
