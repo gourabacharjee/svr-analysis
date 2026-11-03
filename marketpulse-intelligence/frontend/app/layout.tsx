@@ -2,9 +2,14 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SVR Analysis — Free Indian Stock Market Intelligence, SEBI Rules & Trading Hub",
+  title: "SVR Analysis — Trading | Research | Analysis",
   description:
-    "SVR Analysis is a 100% free stock market platform providing real-time news updates on Indian stocks, NSE, BSE, SEBI rules and guidelines, F&O ban lists, FII/DII activity, pre-market levels, and trading current affairs.",
+    "Real-time authentic Indian stock market news, NSE & BSE updates, SEBI rules and guidelines, pre-market technical pivots, and trading current affairs. 100% free for retail traders.",
+  icons: {
+    icon: "./logo.png",
+    shortcut: "./logo.png",
+    apple: "./logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -15,6 +20,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="./logo.png" />
+        <link rel="apple-touch-icon" href="./logo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

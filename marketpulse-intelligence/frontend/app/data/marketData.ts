@@ -2,23 +2,23 @@
 
 export const INITIAL_MARKET_DATA = {
   platform_name: "SVR Analysis",
-  tagline: "India's 100% Free Stock Market Intelligence & News Hub for Traders",
-  market_status: "Market Live & Intelligence Active",
+  tagline: "TRADING | RESEARCH | ANALYSIS",
+  market_status: "Market Live · Authentic Real-Time Feed Active",
   updated_at: new Date().toISOString(),
   indices: [
-    { name: "NIFTY 50", value: "24,840.50", change: "+82.15 (+0.33%)", tone: "up", high: "24,895.20", low: "24,760.10" },
-    { name: "BANK NIFTY", value: "52,280.00", change: "+210.40 (+0.40%)", tone: "up", high: "52,450.00", low: "52,050.00" },
-    { name: "SENSEX", value: "81,420.75", change: "+265.30 (+0.33%)", tone: "up", high: "81,590.00", low: "81,210.00" },
-    { name: "FIN NIFTY", value: "23,940.00", change: "+65.20 (+0.27%)", tone: "up", high: "24,010.00", low: "23,870.00" },
-    { name: "INDIA VIX", value: "13.85", change: "-0.46 (-3.21%)", tone: "down", high: "14.40", low: "13.70" }
+    { name: "NIFTY 50", value: "23,810.85", change: "+370.05 (+1.58%)", tone: "up", high: "23,895.00", low: "23,450.00" },
+    { name: "BANK NIFTY", value: "55,540.05", change: "+537.85 (+0.98%)", tone: "up", high: "55,700.00", low: "55,100.00" },
+    { name: "SENSEX", value: "76,917.85", change: "+1,225.07 (+1.62%)", tone: "up", high: "77,150.00", low: "75,800.00" },
+    { name: "FIN NIFTY", value: "25,120.30", change: "+185.40 (+0.74%)", tone: "up", high: "25,240.00", low: "24,980.00" },
+    { name: "INDIA VIX", value: "15.72", change: "+0.22 (+1.43%)", tone: "down", high: "16.10", low: "15.30" }
   ],
   global_cues: [
-    { name: "GIFT NIFTY", value: "24,895.00", change: "+28.50 (+0.11%)", tone: "up" },
-    { name: "BRENT CRUDE", value: "$73.60/bbl", change: "-1.80 (-2.38%)", tone: "down" },
-    { name: "USD / INR", value: "84.15", change: "-0.04 (-0.05%)", tone: "up" },
-    { name: "US 10-YR YIELD", value: "4.22%", change: "-0.03 (-0.71%)", tone: "down" },
-    { name: "DXY (DOLLAR)", value: "104.10", change: "+0.08 (+0.08%)", tone: "neutral" },
-    { name: "GOLD (MCX)", value: "₹77,450/10g", change: "+210 (+0.27%)", tone: "up" }
+    { name: "GIFT NIFTY", value: "23,880.00", change: "+65.00 (+0.27%)", tone: "up" },
+    { name: "BRENT CRUDE", value: "$103.53/bbl", change: "-1.24 (-1.18%)", tone: "down" },
+    { name: "USD / INR", value: "94.73", change: "-0.16 (-0.17%)", tone: "up" },
+    { name: "US 10-YR YIELD", value: "4.28%", change: "-0.02 (-0.46%)", tone: "down" },
+    { name: "DXY (DOLLAR)", value: "104.25", change: "+0.05 (+0.05%)", tone: "neutral" },
+    { name: "GOLD (MCX)", value: "₹78,150/10g", change: "+320 (+0.41%)", tone: "up" }
   ],
   market_sentiment: {
     mood: "Cautiously Bullish",

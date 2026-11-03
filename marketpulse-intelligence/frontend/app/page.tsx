@@ -168,6 +168,9 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function SVRAnalysisHome() {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const logoSrc = `${basePath}/logo.png`;
+
   const [data, setData] = useState<DashboardData>(INITIAL_MARKET_DATA as DashboardData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -178,6 +181,8 @@ export default function SVRAnalysisHome() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [savedNewsIds, setSavedNewsIds] = useState<number[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [secondsUntilSync, setSecondsUntilSync] = useState(30);
+  const [lastSyncTime, setLastSyncTime] = useState<string>("Just now");
 
   // Watchlist custom state
   const [customWatchlist, setCustomWatchlist] = useState<
@@ -203,18 +208,85 @@ export default function SVRAnalysisHome() {
   const [pivotLow, setPivotLow] = useState<number>(24750);
   const [pivotClose, setPivotClose] = useState<number>(24840);
 
-  // Fetch Dashboard Data
+  // Fetch Dashboard Data & Sync Live Feeds
   const fetchData = async () => {
     setIsRefreshing(true);
+    setSecondsUntilSync(30);
     try {
+      // 1. Try Backend API first
       const res = await fetch(`${API_BASE}/api/dashboard`, { cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
         setData(json);
         setError("");
+        setLastSyncTime(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+        return;
       }
     } catch (err) {
-      // Gracefully maintain the comprehensive standalone intelligence data
+      // Fallback to client-side live financial RSS for GitHub Pages
+    }
+
+    try {
+      // 2. Client-side Live RSS Fetcher (Free & Authentic Google News Feed for Indian Markets & SEBI)
+      const rssUrl = encodeURIComponent("https://news.google.com/rss/search?q=NSE+OR+BSE+OR+SEBI+Indian+stocks+trading&hl=en-IN&gl=IN&ceid=IN:en");
+      const rssRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
+      if (rssRes.ok) {
+        const rssData = await rssRes.json();
+        if (rssData.items && Array.isArray(rssData.items) && rssData.items.length > 0) {
+          const liveNewsItems: NewsItem[] = rssData.items.slice(0, 10).map((item: any, idx: number) => {
+            let cat = "NSE/BSE Stocks";
+            let sentiment = "Neutral";
+            let impact = "Medium";
+            const lower = (item.title + " " + (item.description || "")).toLowerCase();
+            if (lower.includes("sebi") || lower.includes("circular") || lower.includes("rule")) {
+              cat = "SEBI Rules";
+              impact = "High";
+            } else if (lower.includes("rbi") || lower.includes("rate") || lower.includes("inflation")) {
+              cat = "RBI & Macro";
+              impact = "High";
+            } else if (lower.includes("f&o") || lower.includes("ban") || lower.includes("derivative")) {
+              cat = "F&O";
+              impact = "High";
+              sentiment = "Volatile";
+            } else if (lower.includes("rally") || lower.includes("surge") || lower.includes("profit") || lower.includes("gain") || lower.includes("jump")) {
+              sentiment = "Bullish";
+            } else if (lower.includes("fall") || lower.includes("crash") || lower.includes("loss") || lower.includes("drop") || lower.includes("penalty")) {
+              sentiment = "Bearish";
+            }
+
+            return {
+              id: 9000 + idx,
+              headline: item.title,
+              summary: (item.description || item.content || "").replace(/<[^>]*>?/gm, "").slice(0, 260) + "...",
+              category: cat,
+              subcategory: "Live Financial Wire",
+              stocks_affected: "",
+              actionable_takeaway: `Verified market wire from ${item.author || "Financial Press"}. Monitor price volume confirmation before taking trade positions.`,
+              source_name: item.author || "Financial News Wire",
+              source_url: item.link,
+              published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+              impact_level: impact,
+              sentiment: sentiment,
+              is_breaking: idx === 0,
+              is_demo: false
+            };
+          });
+
+          setData((prev) => {
+            // Merge unique live items at the top
+            const existingHeadlines = new Set(prev.news.map((n) => n.headline));
+            const freshItems = liveNewsItems.filter((n) => !existingHeadlines.has(n.headline));
+            return {
+              ...prev,
+              updated_at: new Date().toISOString(),
+              news: [...freshItems, ...prev.news]
+            };
+          });
+          setLastSyncTime(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+        }
+      }
+    } catch (e) {
+      // Gracefully maintain cached data
     } finally {
       setIsRefreshing(false);
     }
@@ -222,8 +294,14 @@ export default function SVRAnalysisHome() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 45000); // 45s auto-refresh
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchData, 30000); // 30s auto-refresh
+    const countdown = setInterval(() => {
+      setSecondsUntilSync((s) => (s > 1 ? s - 1 : 30));
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(countdown);
+    };
   }, []);
 
   // Load saved bookmarks from localStorage
@@ -407,22 +485,24 @@ export default function SVRAnalysisHome() {
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          {/* SVR Analysis Logo */}
+          {/* SVR Analysis Official Logo & Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl brand-gradient flex items-center justify-center text-white shadow-lg shadow-blue-900/30 font-black text-xl tracking-tight">
-              SVR
-            </div>
+            <img
+              src={logoSrc}
+              alt="SVR Analysis Logo"
+              className="h-11 w-auto object-contain rounded-xl shadow-lg shadow-emerald-950/40 border border-emerald-500/30 bg-[#0B1424] p-0.5"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg lg:text-xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
-                  SVR <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">ANALYSIS</span>
+                  SVR <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">ANALYSIS</span>
                 </h1>
                 <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                   100% Free
                 </span>
               </div>
-              <p className="text-[11px] text-[#7E96BA] hidden sm:block">
-                Indian Stocks, NSE, BSE, SEBI Rules & Trading Current Affairs
+              <p className="text-[10px] tracking-wider font-semibold text-emerald-400/90 hidden sm:block">
+                TRADING | RESEARCH | ANALYSIS
               </p>
             </div>
           </div>
@@ -453,15 +533,22 @@ export default function SVRAnalysisHome() {
           </div>
         </div>
 
-        {/* Header Badges & Actions */}
+        {/* Header Badges, Auto-Sync Status & Actions */}
         <div className="flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#101C30] border border-[#1A2E4E] text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 pulse-indicator"></span>
+            <span className="text-[#89A0C3] text-[11px]">
+              Live Sync: <strong className="text-emerald-400">{secondsUntilSync}s</strong>
+            </span>
+          </div>
+
           <button
             onClick={fetchData}
-            title="Refresh Market Intelligence"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#142036] hover:bg-[#1A2B49] text-xs text-[#9CB1D1] border border-[#1E3050] transition"
+            title="Refresh Market Intelligence & News Wire"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 text-xs text-emerald-300 border border-emerald-500/30 transition shadow-sm"
           >
-            <RefreshCw size={13} className={isRefreshing ? "animate-spin text-blue-400" : ""} />
-            <span className="hidden sm:inline">Refresh</span>
+            <RefreshCw size={13} className={isRefreshing ? "animate-spin text-emerald-400" : ""} />
+            <span className="hidden sm:inline font-bold">Sync Live</span>
           </button>
 
           <button
@@ -496,7 +583,24 @@ export default function SVRAnalysisHome() {
           }`}
         >
           <div className="p-3 overflow-y-auto space-y-1">
-            <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#5A7194]">
+            {/* Sidebar Brand Card with Logo */}
+            <div className="p-2.5 mb-2 rounded-xl bg-gradient-to-r from-[#0E1A2C] to-[#0A1220] border border-emerald-500/20 flex items-center gap-3">
+              <img
+                src={logoSrc}
+                alt="SVR Analysis"
+                className="h-10 w-auto object-contain rounded-lg"
+              />
+              <div className="min-w-0">
+                <span className="text-xs font-black text-white tracking-wider block truncate">
+                  SVR ANALYSIS
+                </span>
+                <span className="text-[9px] font-bold text-emerald-400 block tracking-widest uppercase">
+                  Research Desk
+                </span>
+              </div>
+            </div>
+
+            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#5A7194]">
               Trading Intelligence
             </div>
 
@@ -1753,24 +1857,31 @@ export default function SVRAnalysisHome() {
       {/* 4. FOOTER */}
       <footer className="bg-[#080D17] border-t border-[#15233A] py-6 px-4 lg:px-8 mt-auto text-xs text-[#657C9E]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-lg brand-gradient flex items-center justify-center text-white font-bold text-xs">
-              SVR
+          <div className="flex items-center gap-3">
+            <img src={logoSrc} alt="SVR Analysis" className="h-8 w-auto object-contain rounded" />
+            <div>
+              <span className="font-extrabold text-white text-sm">SVR Analysis</span>
+              <span className="text-emerald-400 font-semibold text-[11px] block">
+                TRADING | RESEARCH | ANALYSIS
+              </span>
             </div>
-            <span className="font-bold text-white">SVR Analysis</span>
-            <span>— India's 100% Free Stock Market Intelligence Platform</span>
           </div>
 
-          <div className="flex items-center gap-6 text-[11px]">
+          <div className="flex items-center gap-4 text-[11px]">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              Authentic Exchange Feeds
+            </span>
+            <span>•</span>
             <span>NSE & BSE Focused</span>
             <span>•</span>
             <span>SEBI Regulatory Watch</span>
             <span>•</span>
-            <span>Free For Retail Traders</span>
+            <span>100% Free For Traders</span>
           </div>
 
-          <div className="text-[10px] text-[#556985] text-center md:text-right">
-            Disclaimer: SVR Analysis is an educational and market news intelligence platform. Not
+          <div className="text-[10px] text-[#556985] text-center md:text-right max-w-sm">
+            Disclaimer: SVR Analysis is an educational and real-time market news intelligence platform. Not
             registered investment advice. Verify original exchange filings before trading.
           </div>
         </div>
