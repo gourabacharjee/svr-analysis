@@ -364,6 +364,180 @@ export default function SVRAnalysisHome() {
     setCustomWatchlist(customWatchlist.filter((x) => x.symbol !== symbol));
   };
 
+  // Unified Filtered Intelligence List for Category & Sentiment Filter Bar
+  const filteredUnifiedList = useMemo(() => {
+    const list: Array<{
+      id: string;
+      title: string;
+      category: string;
+      subcategory: string;
+      sentiment: string;
+      summary: string;
+      takeaway: string;
+      source: string;
+      sourceUrl: string;
+      timestamp: string;
+      tagColor: string;
+      targetTab?: string;
+    }> = [];
+
+    // 1. News items
+    (data?.news || []).forEach((n) => {
+      list.push({
+        id: `news-${n.id}`,
+        title: n.headline,
+        category: n.category,
+        subcategory: n.subcategory || "Market Wire",
+        sentiment: n.sentiment,
+        summary: n.summary,
+        takeaway: n.actionable_takeaway,
+        source: n.source_name,
+        sourceUrl: n.source_url,
+        timestamp: n.published_at,
+        tagColor: "blue",
+        targetTab: "stocks",
+      });
+    });
+
+    // 2. Company Catalysts & CEO Alerts
+    (data?.company_catalysts || INITIAL_MARKET_DATA.company_catalysts || []).forEach((c) => {
+      let sent = "Neutral";
+      if (c.action_bias.toLowerCase().includes("bull")) sent = "Bullish";
+      else if (c.action_bias.toLowerCase().includes("bear")) sent = "Bearish";
+      else if (c.action_bias.toLowerCase().includes("volatil")) sent = "Volatile";
+
+      list.push({
+        id: `cat-${c.id}`,
+        title: `[${c.symbol}] ${c.headline}`,
+        category: "NSE/BSE Stocks",
+        subcategory: c.catalyst_type,
+        sentiment: sent,
+        summary: c.details,
+        takeaway: c.trader_advantage,
+        source: c.source,
+        sourceUrl: c.source_url,
+        timestamp: c.timestamp,
+        tagColor: "emerald",
+        targetTab: "catalysts",
+      });
+    });
+
+    // 3. SEBI Rules & Guidelines
+    (data?.sebi_rules || []).forEach((s) => {
+      list.push({
+        id: `sebi-${s.id}`,
+        title: s.title,
+        category: "SEBI Rules",
+        subcategory: s.category || "Regulatory Circular",
+        sentiment: s.trader_impact.toLowerCase().includes("penalty") || s.trader_impact.toLowerCase().includes("prohibit") ? "Bearish" : "Neutral",
+        summary: s.summary,
+        takeaway: s.trader_impact,
+        source: s.circular_no ? `SEBI Circular: ${s.circular_no}` : "SEBI Regulation",
+        sourceUrl: s.official_link,
+        timestamp: new Date().toISOString(),
+        tagColor: "amber",
+        targetTab: "sebi",
+      });
+    });
+
+    // 4. F&O Ban Stocks
+    (data?.fo_ban_list || []).forEach((b) => {
+      list.push({
+        id: `ban-${b.id}`,
+        title: `[${b.symbol}] ${b.company_name} in F&O Ban (${b.mwpl_percent} MWPL)`,
+        category: "F&O",
+        subcategory: "F&O Ban List",
+        sentiment: b.status.includes("In Ban") ? "Bearish" : "Volatile",
+        summary: `Stock open interest reached ${b.mwpl_percent} MWPL. Initiating new derivative positions is strictly prohibited.`,
+        takeaway: b.trader_advice,
+        source: "NSE Derivatives Desk",
+        sourceUrl: "https://www.nseindia.com/",
+        timestamp: new Date().toISOString(),
+        tagColor: "rose",
+        targetTab: "fo_ban",
+      });
+    });
+
+    // Filter by Category
+    return list.filter((item) => {
+      // Category Matching
+      let matchCat = false;
+      if (selectedCategory === "All") {
+        matchCat = true;
+      } else if (selectedCategory === "SEBI Rules") {
+        matchCat =
+          item.category.toLowerCase().includes("sebi") ||
+          item.category.toLowerCase().includes("rule") ||
+          item.subcategory.toLowerCase().includes("sebi") ||
+          item.title.toLowerCase().includes("sebi");
+      } else if (selectedCategory === "NSE/BSE Stocks") {
+        matchCat =
+          item.category.toLowerCase().includes("stock") ||
+          item.category.toLowerCase().includes("nse") ||
+          item.category.toLowerCase().includes("bse") ||
+          item.category.toLowerCase().includes("corporate") ||
+          item.subcategory.toLowerCase().includes("order") ||
+          item.subcategory.toLowerCase().includes("results") ||
+          item.subcategory.toLowerCase().includes("ceo") ||
+          item.subcategory.toLowerCase().includes("management");
+      } else if (selectedCategory === "RBI & Macro") {
+        matchCat =
+          item.category.toLowerCase().includes("rbi") ||
+          item.category.toLowerCase().includes("macro") ||
+          item.title.toLowerCase().includes("rbi") ||
+          item.title.toLowerCase().includes("inflation");
+      } else if (selectedCategory === "F&O") {
+        matchCat =
+          item.category.toLowerCase().includes("f&o") ||
+          item.category.toLowerCase().includes("derivative") ||
+          item.subcategory.toLowerCase().includes("ban") ||
+          item.title.toLowerCase().includes("f&o");
+      } else if (selectedCategory === "Commodities & Currency") {
+        matchCat =
+          item.category.toLowerCase().includes("commodit") ||
+          item.category.toLowerCase().includes("currenc") ||
+          item.title.toLowerCase().includes("crude") ||
+          item.title.toLowerCase().includes("oil") ||
+          item.title.toLowerCase().includes("gold") ||
+          item.title.toLowerCase().includes("rupee") ||
+          item.title.toLowerCase().includes("usd");
+      } else {
+        matchCat = item.category.toLowerCase().includes(selectedCategory.toLowerCase());
+      }
+
+      // Sentiment Matching
+      let matchSentiment = false;
+      if (selectedSentiment === "All") {
+        matchSentiment = true;
+      } else if (selectedSentiment === "Bullish") {
+        matchSentiment =
+          item.sentiment.toLowerCase().includes("bull") ||
+          item.takeaway.toLowerCase().includes("long") ||
+          item.takeaway.toLowerCase().includes("buy") ||
+          item.takeaway.toLowerCase().includes("expand");
+      } else if (selectedSentiment === "Bearish") {
+        matchSentiment =
+          item.sentiment.toLowerCase().includes("bear") ||
+          item.takeaway.toLowerCase().includes("short") ||
+          item.takeaway.toLowerCase().includes("exit") ||
+          item.takeaway.toLowerCase().includes("avoid") ||
+          item.takeaway.toLowerCase().includes("dip") ||
+          item.takeaway.toLowerCase().includes("penalty");
+      } else if (selectedSentiment === "Volatile") {
+        matchSentiment =
+          item.sentiment.toLowerCase().includes("volatil") ||
+          item.sentiment.toLowerCase().includes("mixed") ||
+          item.takeaway.toLowerCase().includes("volatility");
+      } else if (selectedSentiment === "Neutral") {
+        matchSentiment =
+          item.sentiment.toLowerCase().includes("neutr") ||
+          item.sentiment === "Neutral";
+      }
+
+      return matchCat && matchSentiment;
+    });
+  }, [data, selectedCategory, selectedSentiment]);
+
   // Filtered News
   const filteredNews = useMemo(() => {
     if (!data?.news) return [];
@@ -1101,51 +1275,177 @@ export default function SVRAnalysisHome() {
             </div>
           )}
 
-          {/* Quick Filter Bar for News Content */}
-          {(activeTab === "overview" || activeTab === "stocks" || activeTab === "current_affairs") && (
-            <div className="bg-[#0D1525] border border-[#192A44] rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3">
+          {/* Interactive Filter Bar for Category & Sentiment */}
+          <div className="bg-[#0D1525] border border-[#192A44] rounded-2xl p-3.5 space-y-3 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
-                <span className="text-xs text-[#6A81A4] font-medium flex items-center gap-1.5 pl-1 pr-2">
-                  <Filter size={13} /> Filter:
+                <span className="text-xs text-[#6A81A4] font-bold flex items-center gap-1.5 pl-1 pr-1">
+                  <Filter size={14} className="text-cyan-400" /> Filter:
                 </span>
                 {[
-                  "All",
-                  "SEBI Rules",
-                  "NSE/BSE Stocks",
-                  "RBI & Macro",
-                  "F&O",
-                  "Commodities & Currency",
-                ].map((cat) => (
+                  { id: "All", label: "All News & Intelligence" },
+                  { id: "SEBI Rules", label: "SEBI Rules & Guidelines" },
+                  { id: "NSE/BSE Stocks", label: "NSE & BSE Stocks" },
+                  { id: "RBI & Macro", label: "RBI & Macro" },
+                  { id: "F&O", label: "F&O & Derivatives" },
+                  { id: "Commodities & Currency", label: "Commodities & Currency" },
+                ].map((item) => (
                   <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
-                      selectedCategory === cat
-                        ? "bg-blue-600 text-white font-semibold shadow"
-                        : "bg-[#142036] text-[#9CB1D1] hover:bg-[#1A2B48] hover:text-white"
+                    key={item.id}
+                    onClick={() => setSelectedCategory(item.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 ${
+                      selectedCategory === item.id
+                        ? "bg-cyan-500 text-black font-extrabold shadow-lg shadow-cyan-500/20"
+                        : "bg-[#142036] text-[#9CB1D1] hover:bg-[#1C2E4C] hover:text-white"
                     }`}
                   >
-                    {cat}
+                    <span>{item.label}</span>
                   </button>
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#6A81A4]">Sentiment:</span>
+              {/* Sentiment Dropdown & Clear Filter */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-[#6A81A4]">Market Sentiment:</span>
                 <select
                   value={selectedSentiment}
                   onChange={(e) => setSelectedSentiment(e.target.value)}
-                  className="bg-[#142036] border border-[#213554] text-xs text-white rounded-lg px-2.5 py-1.5 outline-none"
+                  className="bg-[#142036] border border-[#213554] text-xs font-semibold text-white rounded-xl px-3 py-1.5 outline-none hover:border-cyan-500 transition cursor-pointer"
                 >
                   <option value="All">All Sentiments</option>
-                  <option value="Bullish">Bullish 🟢</option>
-                  <option value="Bearish">Bearish 🔴</option>
-                  <option value="Volatile">Volatile ⚡</option>
+                  <option value="Bullish">Bullish 🟢 (Long Setups)</option>
+                  <option value="Bearish">Bearish 🔴 (Short / Exit Warnings)</option>
+                  <option value="Volatile">Volatile ⚡ (High Range)</option>
                   <option value="Neutral">Neutral ⚪</option>
                 </select>
+
+                {(selectedCategory !== "All" || selectedSentiment !== "All") && (
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("All");
+                      setSelectedSentiment("All");
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 text-xs font-bold border border-rose-500/30 transition flex items-center gap-1"
+                  >
+                    ✕ Reset
+                  </button>
+                )}
               </div>
             </div>
-          )}
+
+            {/* Active Filter Results Banner & Stream (Shown immediately when filter is selected) */}
+            {(selectedCategory !== "All" || selectedSentiment !== "All") && (
+              <div className="pt-3 border-t border-[#182842] space-y-4 animate-in fade-in duration-200">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-[#8BA0BF]">
+                      Active Filter: <strong className="text-cyan-300">{selectedCategory}</strong>
+                      {selectedSentiment !== "All" && (
+                        <span className="text-emerald-400 ml-1">({selectedSentiment})</span>
+                      )}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-xs border border-cyan-500/30">
+                      {filteredUnifiedList.length} results
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-[#6981A4]">
+                    Real-time aggregated results from authentic exchange filings, circulars & news wire
+                  </span>
+                </div>
+
+                {filteredUnifiedList.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-[#7B92B5] bg-[#101C30] rounded-xl border border-[#1A2E4E] space-y-2">
+                    <p className="text-sm font-bold text-white">
+                      No items match &quot;{selectedCategory}&quot; with sentiment &quot;{selectedSentiment}&quot;.
+                    </p>
+                    <p>Try switching sentiment to &quot;All Sentiments&quot; to see all results.</p>
+                    <button
+                      onClick={() => {
+                        setSelectedCategory("All");
+                        setSelectedSentiment("All");
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-black font-extrabold text-xs"
+                    >
+                      Reset All Filters
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {filteredUnifiedList.map((item) => (
+                      <article
+                        key={item.id}
+                        className="bg-[#101C30] border border-[#1C2F4D] hover:border-cyan-500/40 rounded-xl p-4 space-y-3 transition flex flex-col justify-between shadow"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  item.tagColor === "amber"
+                                    ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                                    : item.tagColor === "emerald"
+                                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                                    : item.tagColor === "rose"
+                                    ? "bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                                    : "bg-blue-500/15 text-blue-300 border border-blue-500/30"
+                                }`}
+                              >
+                                {item.category}
+                              </span>
+                              <span className="text-[10px] text-[#7890B2]">{item.subcategory}</span>
+                            </div>
+
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                item.sentiment === "Bullish"
+                                  ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                  : item.sentiment === "Bearish"
+                                  ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                  : item.sentiment === "Volatile"
+                                  ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                                  : "bg-slate-500/15 text-slate-300 border border-slate-500/30"
+                              }`}
+                            >
+                              {item.sentiment}
+                            </span>
+                          </div>
+
+                          <h3 className="text-sm font-bold text-white leading-snug">{item.title}</h3>
+
+                          <p className="text-xs text-[#90A5C4] leading-relaxed line-clamp-3">
+                            {item.summary}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2 pt-2 border-t border-[#162740]">
+                          {item.takeaway && (
+                            <div className="bg-[#14233A] p-2.5 rounded-lg border-l-2 border-cyan-400 text-xs text-cyan-200">
+                              <span className="font-bold text-cyan-300 block text-[11px] mb-0.5">
+                                ⚡ Actionable Trader Takeaway:
+                              </span>
+                              <p className="leading-relaxed">{item.takeaway}</p>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between text-[11px] text-[#6981A4] pt-1">
+                            <span className="truncate max-w-[200px]">Source: {item.source}</span>
+                            {item.targetTab && (
+                              <button
+                                onClick={() => setActiveTab(item.targetTab || "stocks")}
+                                className="text-cyan-400 hover:text-white font-semibold flex items-center gap-1"
+                              >
+                                Open Full View →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* VIEW: 1. OVERVIEW DASHBOARD */}
           {activeTab === "overview" && (
