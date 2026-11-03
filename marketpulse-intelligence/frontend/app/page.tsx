@@ -1027,21 +1027,17 @@ export default function SVRAnalysisHome() {
           }`}
         >
           <div className="p-3 overflow-y-auto space-y-1">
-            {/* Sidebar Brand Card with Logo */}
-            <div className="p-2.5 mb-2 rounded-xl bg-gradient-to-r from-[#0E1A2C] to-[#0A1220] border border-emerald-500/20 flex items-center gap-3">
-              <img
-                src={logoSrc}
-                alt="SVR Analysis"
-                className="h-10 w-auto object-contain rounded-lg"
-              />
-              <div className="min-w-0">
-                <span className="text-xs font-black text-white tracking-wider block truncate">
-                  SVR ANALYSIS
-                </span>
-                <span className="text-[9px] font-bold text-emerald-400 block tracking-widest uppercase">
-                  Research Desk
+            {/* Clean Market Status Header */}
+            <div className="px-3 py-2 mb-2 flex items-center justify-between border-b border-[#16243A]">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 pulse-indicator"></span>
+                <span className="text-[10px] font-bold text-[#8FA5C4] uppercase tracking-wider">
+                  NSE · BSE Desk
                 </span>
               </div>
+              <span className="text-[9px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                Live
+              </span>
             </div>
 
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#5A7194]">
