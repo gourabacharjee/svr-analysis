@@ -136,25 +136,56 @@ def sync_authentic_news_rss(db: Session):
                 # Deduplicate
                 existing = db.query(News).filter(News.headline == clean_title).first()
                 if not existing:
-                    # Categorize accurately
+                    # Categorize accurately into Indian Market News or Sector News (India)
                     lower = clean_title.lower()
-                    cat = "NSE/BSE Stocks"
+                    cat = "Indian Market News"
+                    subcat = "Market Pulse"
                     sentiment = "Neutral"
                     impact = "Medium"
 
-                    if "sebi" in lower or "circular" in lower or "regulatory" in lower or "mandate" in lower:
-                        cat = "SEBI Rules"
+                    if "bank" in lower or "lending" in lower or "npa" in lower or "credit" in lower:
+                        cat = "Sector News (India)"
+                        subcat = "Banking & Financial Services"
+                    elif "it " in lower or "tech" in lower or "software" in lower or "ai " in lower or "digital" in lower:
+                        cat = "Sector News (India)"
+                        subcat = "IT & Technology"
+                    elif "auto" in lower or "vehicle" in lower or "car" in lower or "ev " in lower or "motor" in lower:
+                        cat = "Sector News (India)"
+                        subcat = "Automobile & EV Mobility"
+                    elif "pharma" in lower or "drug" in lower or "fda" in lower or "health" in lower:
+                        cat = "Sector News (India)"
+                        subcat = "Pharma & Healthcare"
+                    elif "metal" in lower or "steel" in lower or "mining" in lower or "copper" in lower or "coal" in lower:
+                        cat = "Sector News (India)"
+                        subcat = "Metals & Mining"
+                    elif "energy" in lower or "crude" in lower or "oil" in lower or "gas" in lower or "petrol" in lower:
+                        cat = "Sector News (India)"
+                        subcat = "Energy, Oil & Gas"
+                    elif "fmcg" in lower or "consumer" in lower or "retail" in lower or "monsoon" in lower:
+                        cat = "Sector News (India)"
+                        subcat = "FMCG & Consumer Goods"
+                    elif "infra" in lower or "railway" in lower or "defense" in lower or "defence" in lower:
+                        cat = "Sector News (India)"
+                        subcat = "Defense & Capital Goods"
+                    elif "realty" in lower or "real estate" in lower or "housing" in lower or "property" in lower:
+                        cat = "Sector News (India)"
+                        subcat = "Realty & Real Estate"
+                    elif "sebi" in lower or "circular" in lower or "regulatory" in lower:
+                        cat = "Indian Market News"
+                        subcat = "SEBI Market Regulation"
                         impact = "High"
-                    elif "rbi" in lower or "repo rate" in lower or "inflation" in lower:
-                        cat = "RBI & Macro"
+                    elif "rbi" in lower or "repo rate" in lower or "inflation" in lower or "gdp" in lower:
+                        cat = "Indian Market News"
+                        subcat = "Macroeconomic & Monetary Policy"
                         impact = "High"
-                    elif "f&o" in lower or "derivative" in lower or "ban" in lower or "lot size" in lower:
-                        cat = "F&O"
+                    elif "nifty" in lower or "sensex" in lower or "market" in lower or "fii" in lower or "dii" in lower:
+                        cat = "Indian Market News"
+                        subcat = "Benchmark Indices & Breadth"
                         impact = "High"
-                        sentiment = "Volatile"
-                    elif "profit" in lower or "q3" in lower or "q4" in lower or "surge" in lower or "record" in lower or "order win" in lower:
+
+                    if "surge" in lower or "rally" in lower or "gain" in lower or "record" in lower or "rise" in lower:
                         sentiment = "Bullish"
-                    elif "fall" in lower or "drop" in lower or "slump" in lower or "loss" in lower or "penalty" in lower:
+                    elif "fall" in lower or "drop" in lower or "slump" in lower or "decline" in lower or "loss" in lower:
                         sentiment = "Bearish"
 
                     takeaway = f"Verified market update from {source_name}. Key levels and volatility should be tracked by intraday traders."
@@ -163,7 +194,7 @@ def sync_authentic_news_rss(db: Session):
                         headline=clean_title,
                         summary=f"Authentic financial market reporting from {source_name}. Traders must cross-check volume and price action at pivotal technical zones.",
                         category=cat,
-                        subcategory="Live News Wire",
+                        subcategory=subcat,
                         stocks_affected="",
                         actionable_takeaway=takeaway,
                         source_name=source_name,
