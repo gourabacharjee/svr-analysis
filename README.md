@@ -96,3 +96,4 @@ source .venv/bin/activate
 uvicorn app.main:app --reload --port 8000
 ```
 Interactive API docs: `http://localhost:8000/docs`
+
