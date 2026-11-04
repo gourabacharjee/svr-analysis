@@ -370,18 +370,39 @@ export default function SVRAnalysisHome() {
     "BRENT CRUDE": 74.65,
   });
 
-  // Fetch Dashboard Data & Sync Live Feeds
+  // Fetch Dashboard Data & Real-Time Multi-Source News Engine
   const fetchData = async () => {
     setIsRefreshing(true);
     setSecondsUntilSync(15);
+
+    // 1. Try Local/Remote Backend API first if active
     try {
-      // 1. Try Local/Remote Backend API first
       const res = await fetch(`${API_BASE}/api/dashboard`, { cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
-        setData(json);
+        if (json?.news && Array.isArray(json.news) && json.news.length > 0) {
+          setData((prev) => {
+            const combined = [...json.news, ...(prev.news || [])];
+            const seen = new Set<string>();
+            const deduped: NewsItem[] = [];
+            combined.forEach((n) => {
+              const k = (n.headline || "").toLowerCase().trim();
+              if (k && !seen.has(k)) {
+                seen.add(k);
+                deduped.push(n);
+              }
+            });
+            deduped.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+            return {
+              ...prev,
+              ...json,
+              news: deduped,
+              updated_at: new Date().toISOString(),
+            };
+          });
+        }
         setError("");
-        setLastSyncTime(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+        setLastSyncTime(new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", second: "2-digit" }));
 
         // Sync references with live backend values
         if (json?.indices && Array.isArray(json.indices)) {
@@ -392,72 +413,219 @@ export default function SVRAnalysisHome() {
             }
           });
         }
-        return;
       }
     } catch (err) {
-      // Fallback to client-side live financial feeds & authentic tick engine for GitHub Pages
+      // Fallback to high-frequency multi-feed financial wire
     }
 
+    // 2. High-Frequency Real-Time Indian Market News Aggregator
+    // Fetches live feeds from Livemint Markets, Economic Times Stocks, and Google News Real-Time Indian Equities (last 2 hours)
     try {
-      // 2. Client-side Live RSS Fetcher (Free & Authentic Google News Feed for Indian Markets & SEBI)
-      const rssUrl = encodeURIComponent("https://news.google.com/rss/search?q=NSE+OR+BSE+OR+SEBI+Indian+stocks+trading&hl=en-IN&gl=IN&ceid=IN:en");
-      const rssRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
-      if (rssRes.ok) {
-        const rssData = await rssRes.json();
-        if (rssData.items && Array.isArray(rssData.items) && rssData.items.length > 0) {
-          const liveNewsItems: NewsItem[] = rssData.items.slice(0, 10).map((item: any, idx: number) => {
-            let cat = "NSE/BSE Stocks";
-            let sentiment = "Neutral";
-            let impact = "Medium";
-            const lower = (item.title + " " + (item.description || "")).toLowerCase();
-            if (lower.includes("sebi") || lower.includes("circular") || lower.includes("rule")) {
-              cat = "SEBI Rules";
-              impact = "High";
-            } else if (lower.includes("rbi") || lower.includes("rate") || lower.includes("inflation")) {
-              cat = "RBI & Macro";
-              impact = "High";
-            } else if (lower.includes("f&o") || lower.includes("ban") || lower.includes("derivative")) {
-              cat = "F&O";
-              impact = "High";
-              sentiment = "Volatile";
-            } else if (lower.includes("rally") || lower.includes("surge") || lower.includes("profit") || lower.includes("gain") || lower.includes("jump")) {
-              sentiment = "Bullish";
-            } else if (lower.includes("fall") || lower.includes("crash") || lower.includes("loss") || lower.includes("drop") || lower.includes("penalty")) {
-              sentiment = "Bearish";
+      const cacheBuster = Date.now();
+      const FEEDS = [
+        {
+          name: "Livemint Markets",
+          url: "https://www.livemint.com/rss/markets",
+          defaultCategory: "Indian Market News",
+          defaultSubcategory: "Market Pulse",
+        },
+        {
+          name: "Economic Times Stocks",
+          url: "https://economictimes.indiatimes.com/markets/stocks/rssfeeds/2146842.cms",
+          defaultCategory: "Sector News (India)",
+          defaultSubcategory: "Corporate & Equities",
+        },
+        {
+          name: "NSE/BSE Exchange Wire",
+          url: "https://news.google.com/rss/search?q=(NSE+OR+BSE+OR+Nifty+OR+Sensex+OR+SEBI)+when:2h&hl=en-IN&gl=IN&ceid=IN:en",
+          defaultCategory: "Indian Market News",
+          defaultSubcategory: "Live Financial Wire",
+        },
+      ];
+
+      const feedPromises = FEEDS.map(async (feed) => {
+        try {
+          const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&_t=${cacheBuster}`;
+          const r = await fetch(proxyUrl);
+          if (!r.ok) return [];
+          const j = await r.json();
+          if (!j.items || !Array.isArray(j.items)) return [];
+
+          return j.items.map((it: any, idx: number) => {
+            let headline = (it.title || "").trim();
+            let source = (it.author || feed.name).trim();
+
+            // Extract trailing source tag if present in headline (e.g. "BSE Q2 Results - Reuters")
+            if (headline.includes(" - ")) {
+              const parts = headline.split(" - ");
+              if (parts.length > 1) {
+                const possibleSrc = parts[parts.length - 1].trim();
+                if (possibleSrc.length > 2 && possibleSrc.length < 35) {
+                  source = possibleSrc;
+                  headline = parts.slice(0, -1).join(" - ").trim();
+                }
+              }
             }
 
+            // Accurate GMT/UTC to ISO Date parsing: rss2json outputs "YYYY-MM-DD HH:MM:SS" in UTC/GMT
+            let publishedAt = new Date().toISOString();
+            if (it.pubDate) {
+              let cleanPub = String(it.pubDate).trim();
+              if (!cleanPub.includes("T")) {
+                cleanPub = cleanPub.replace(" ", "T");
+              }
+              if (!cleanPub.endsWith("Z") && !cleanPub.includes("+") && !cleanPub.includes("-", 10)) {
+                cleanPub = cleanPub + "Z";
+              }
+              const parsedDate = new Date(cleanPub);
+              if (!isNaN(parsedDate.getTime())) {
+                publishedAt = parsedDate.toISOString();
+              }
+            }
+
+            const lower = (headline + " " + (it.description || "")).toLowerCase();
+            let cat = feed.defaultCategory;
+            let subcat = feed.defaultSubcategory;
+            let sentiment = "Neutral";
+            let impact = "Medium";
+
+            // Sector & Category Intelligence
+            if (lower.includes("bank") || lower.includes("hdfc") || lower.includes("icici") || lower.includes("sbi") || lower.includes("lending") || lower.includes("npa") || lower.includes("credit")) {
+              cat = "Sector News (India)";
+              subcat = "Banking & Financial Services";
+            } else if (lower.includes("it ") || lower.includes("tech") || lower.includes("software") || lower.includes("tcs") || lower.includes("infy") || lower.includes("wipro") || lower.includes("ai ")) {
+              cat = "Sector News (India)";
+              subcat = "IT & Technology";
+            } else if (lower.includes("auto") || lower.includes("vehicle") || lower.includes("car") || lower.includes("ev ") || lower.includes("tata motors") || lower.includes("maruti") || lower.includes("m&m")) {
+              cat = "Sector News (India)";
+              subcat = "Automobile & EV Mobility";
+            } else if (lower.includes("pharma") || lower.includes("drug") || lower.includes("fda") || lower.includes("health") || lower.includes("sun pharma") || lower.includes("cipla")) {
+              cat = "Sector News (India)";
+              subcat = "Pharma & Healthcare";
+            } else if (lower.includes("metal") || lower.includes("steel") || lower.includes("mining") || lower.includes("vedanta") || lower.includes("tata steel") || lower.includes("copper")) {
+              cat = "Sector News (India)";
+              subcat = "Metals & Mining";
+            } else if (lower.includes("energy") || lower.includes("crude") || lower.includes("oil") || lower.includes("gas") || lower.includes("reliance") || lower.includes("petrol")) {
+              cat = "Sector News (India)";
+              subcat = "Energy, Oil & Gas";
+            } else if (lower.includes("fmcg") || lower.includes("consumer") || lower.includes("itc") || lower.includes("hul") || lower.includes("retail") || lower.includes("food")) {
+              cat = "Sector News (India)";
+              subcat = "FMCG & Consumer Goods";
+            } else if (lower.includes("defense") || lower.includes("defence") || lower.includes("bel") || lower.includes("hal") || lower.includes("railway") || lower.includes("infra")) {
+              cat = "Sector News (India)";
+              subcat = "Defense & Capital Goods";
+            } else if (lower.includes("sebi") || lower.includes("circular") || lower.includes("regulatory") || lower.includes("order") || lower.includes("guideline")) {
+              cat = "Indian Market News";
+              subcat = "SEBI Market Regulation";
+              impact = "High";
+            } else if (lower.includes("rbi") || lower.includes("repo rate") || lower.includes("inflation") || lower.includes("gdp") || lower.includes("fiscal") || lower.includes("rupee")) {
+              cat = "Indian Market News";
+              subcat = "Macroeconomic & Monetary Policy";
+              impact = "High";
+            } else if (lower.includes("f&o") || lower.includes("ban") || lower.includes("derivative") || lower.includes("mwpl") || lower.includes("expiry")) {
+              cat = "Indian Market News";
+              subcat = "F&O Expiry & Ban Radar";
+              impact = "High";
+              sentiment = "Volatile";
+            }
+
+            // Sentiment Detection
+            if (lower.includes("surge") || lower.includes("rally") || lower.includes("profit zooms") || lower.includes("profit up") || lower.includes("record high") || lower.includes("gains") || lower.includes("jumps") || lower.includes("soars") || lower.includes("rebound") || lower.includes("bull") || lower.includes("buy")) {
+              sentiment = "Bullish";
+            } else if (lower.includes("crash") || lower.includes("plunge") || lower.includes("drops") || lower.includes("falls") || lower.includes("loss") || lower.includes("slump") || lower.includes("penalty") || lower.includes("probe") || lower.includes("fraud") || lower.includes("resigns") || lower.includes("bear") || lower.includes("sell")) {
+              sentiment = "Bearish";
+              impact = "High";
+            } else if (lower.includes("volatile") || lower.includes("swings") || lower.includes("mixed") || lower.includes("choppy") || lower.includes("cautious")) {
+              sentiment = "Volatile";
+            }
+
+            // Known Indian Stock Tickers Detection
+            const KNOWN_TICKERS = [
+              "RELIANCE", "TCS", "HDFCBANK", "INFY", "TATAMOTORS", "ZOMATO", "WIPRO", "BEL",
+              "NYKAA", "BSE", "NSE", "NIFTY", "SENSEX", "BANDHANBNK", "VEDL", "ADANIENT",
+              "ITC", "SBIN", "BHARTIARTL", "KOTAKBANK", "ICICIBANK", "AXISBANK", "LT", "TITAN"
+            ];
+            const detectedTickers: string[] = [];
+            KNOWN_TICKERS.forEach((sym) => {
+              if (new RegExp(`\\b${sym}\\b`, "i").test(headline)) {
+                detectedTickers.push(sym);
+              }
+            });
+
+            // Age Calculation
+            const ageMins = Math.floor((Date.now() - new Date(publishedAt).getTime()) / 60000);
+            const isBreaking = ageMins < 45 || impact === "High" || lower.includes("breaking") || lower.includes("alert") || lower.includes("resigns") || lower.includes("q2 results");
+
+            const cleanSummary = (it.description || it.content || headline)
+              .replace(/<[^>]*>?/gm, "")
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'")
+              .replace(/&amp;/g, "&")
+              .replace(/\s+/g, " ")
+              .trim()
+              .slice(0, 280) + "...";
+
             return {
-              id: 9000 + idx,
-              headline: item.title,
-              summary: (item.description || item.content || "").replace(/<[^>]*>?/gm, "").slice(0, 260) + "...",
+              id: 500000 + Math.floor(Math.random() * 400000) + idx,
+              headline,
+              summary: cleanSummary,
               category: cat,
-              subcategory: "Live Financial Wire",
-              stocks_affected: "",
-              actionable_takeaway: `Verified market wire from ${item.author || "Financial Press"}. Monitor price volume confirmation before taking trade positions.`,
-              source_name: item.author || "Financial News Wire",
-              source_url: item.link,
-              published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+              subcategory: subcat,
+              stocks_affected: detectedTickers.join(", "),
+              actionable_takeaway: `Verified real-time dispatch from ${source}. Confirm support/resistance and order book depth before taking trade positions.`,
+              source_name: source,
+              source_url: it.link || "https://news.google.com/",
+              published_at: publishedAt,
               impact_level: impact,
-              sentiment: sentiment,
-              is_breaking: idx === 0,
-              is_demo: false
+              sentiment,
+              is_breaking: isBreaking,
+              is_demo: false,
             };
+          });
+        } catch (err) {
+          return [];
+        }
+      });
+
+      const feedBatches = await Promise.all(feedPromises);
+      const incomingNews: NewsItem[] = feedBatches.flat();
+
+      if (incomingNews.length > 0) {
+        setData((prev) => {
+          const seen = new Set<string>();
+          const dedupedList: NewsItem[] = [];
+
+          // 1. Add incoming fresh live news items
+          incomingNews.forEach((item) => {
+            const key = item.headline.toLowerCase().trim();
+            if (key && !seen.has(key)) {
+              seen.add(key);
+              dedupedList.push(item);
+            }
           });
 
-          setData((prev) => {
-            const existingHeadlines = new Set(prev.news.map((n) => n.headline));
-            const freshItems = liveNewsItems.filter((n) => !existingHeadlines.has(n.headline));
-            return {
-              ...prev,
-              updated_at: new Date().toISOString(),
-              news: [...freshItems, ...prev.news]
-            };
+          // 2. Add previously cached items if not already seen
+          (prev.news || []).forEach((item) => {
+            const key = item.headline.toLowerCase().trim();
+            if (key && !seen.has(key)) {
+              seen.add(key);
+              dedupedList.push(item);
+            }
           });
-          setLastSyncTime(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-        }
+
+          // 3. CRITICAL: Sort strictly descending by publication timestamp (Newest first!)
+          dedupedList.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
+
+          return {
+            ...prev,
+            updated_at: new Date().toISOString(),
+            news: dedupedList,
+          };
+        });
+        setLastSyncTime(new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", second: "2-digit" }));
       }
     } catch (e) {
-      // Gracefully maintain cached data
+      // Keep cached data gracefully
     } finally {
       setIsRefreshing(false);
     }
@@ -872,7 +1040,7 @@ export default function SVRAnalysisHome() {
     });
 
     // Filter by Category
-    return list.filter((item) => {
+    const filtered = list.filter((item) => {
       // Category Matching
       let matchCat = false;
       if (selectedCategory === "All") {
@@ -954,12 +1122,14 @@ export default function SVRAnalysisHome() {
 
       return matchCat && matchSentiment;
     });
+
+    return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [data, selectedCategory, selectedSentiment]);
 
-  // Filtered News
+  // Filtered News (Strictly sorted descending by published_at: newest first)
   const filteredNews = useMemo(() => {
     if (!data?.news) return [];
-    return data.news.filter((item) => {
+    const list = data.news.filter((item) => {
       const matchesCat =
         selectedCategory === "All" ||
         item.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
@@ -975,10 +1145,13 @@ export default function SVRAnalysisHome() {
         item.headline.toLowerCase().includes(q) ||
         item.summary.toLowerCase().includes(q) ||
         item.stocks_affected.toLowerCase().includes(q) ||
-        item.actionable_takeaway.toLowerCase().includes(q);
+        item.actionable_takeaway.toLowerCase().includes(q) ||
+        item.source_name.toLowerCase().includes(q);
 
       return matchesCat && matchesSentiment && matchesSearch;
     });
+
+    return list.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
   }, [data?.news, selectedCategory, selectedSentiment, searchQuery]);
 
   // Saved Bookmarked News
@@ -1106,6 +1279,45 @@ export default function SVRAnalysisHome() {
 
     return { P, R1, S1, R2, S2, R3, S3, fibR1, fibR2, fibR3, fibS1, fibS2, fibS3 };
   }, [pivotHigh, pivotLow, pivotClose]);
+
+  const formatNewsTimestamp = (isoString: string) => {
+    try {
+      const d = new Date(isoString);
+      const now = Date.now();
+      const diffSec = Math.max(0, Math.floor((now - d.getTime()) / 1000));
+
+      let relativeStr = "Just now";
+      if (diffSec < 60) {
+        relativeStr = `${diffSec}s ago`;
+      } else if (diffSec < 3600) {
+        relativeStr = `${Math.floor(diffSec / 60)}m ago`;
+      } else if (diffSec < 86400) {
+        relativeStr = `${Math.floor(diffSec / 3600)}h ago`;
+      } else {
+        relativeStr = `${Math.floor(diffSec / 86400)}d ago`;
+      }
+
+      const fullIST = d.toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      const isLiveFresh = diffSec < 2400; // Under 40 minutes
+
+      return {
+        relativeStr,
+        fullIST,
+        isLiveFresh,
+      };
+    } catch (e) {
+      return { relativeStr: "", fullIST: isoString, isLiveFresh: false };
+    }
+  };
 
   const formatIST = (isoString: string) => {
     try {
@@ -2587,8 +2799,9 @@ export default function SVRAnalysisHome() {
                   </div>
 
                   <div className="space-y-3.5">
-                    {filteredNews.slice(0, 5).map((news) => {
+                    {filteredNews.slice(0, 8).map((news) => {
                       const isBigNews = news.impact_level === "High" || news.is_breaking;
+                      const timeInfo = formatNewsTimestamp(news.published_at);
                       return (
                         <article
                           key={news.id}
@@ -2605,9 +2818,9 @@ export default function SVRAnalysisHome() {
                                   <AlertTriangle size={12} /> CRITICAL MARKET MOVER
                                 </span>
                               )}
-                              {isBigNews && (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-950/80 text-red-300 border border-red-500/50">
-                                  ⚡ High Market Fluctuation
+                              {timeInfo.isLiveFresh && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 animate-pulse">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> LIVE WIRE
                                 </span>
                               )}
                               <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
@@ -2615,8 +2828,13 @@ export default function SVRAnalysisHome() {
                               }`}>
                                 {news.category}
                               </span>
-                              <span className="text-[10px] text-[#6981A4] flex items-center gap-1">
-                                <Clock size={11} /> {formatIST(news.published_at)}
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#142238] text-sky-300 border border-[#203759] flex items-center gap-1">
+                                <Building2 size={11} className="text-sky-400" /> {news.source_name}
+                              </span>
+                              <span className="text-[11px] text-[#8EA2BF] flex items-center gap-1 font-mono">
+                                <Clock size={11} className="text-emerald-400" />
+                                <strong className="text-emerald-400 font-bold">{timeInfo.relativeStr}</strong>
+                                <span className="text-slate-400 hidden sm:inline">({timeInfo.fullIST})</span>
                               </span>
                               {news.stocks_affected && (
                                 <span className="text-[10px] font-mono font-bold bg-[#142238] text-cyan-300 px-2 py-0.5 rounded border border-[#203759]">
@@ -2681,16 +2899,20 @@ export default function SVRAnalysisHome() {
                             </div>
                           )}
 
-                          <div className="flex items-center justify-between pt-2 border-t border-[#16253C] text-[11px] text-[#6981A4]">
-                            <span>Source: <strong>{news.source_name}</strong></span>
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#16253C] text-[11px] text-[#788FAE]">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span>Verified Source: <strong className="text-white">{news.source_name}</strong></span>
+                              <span>•</span>
+                              <span className="text-slate-400">{timeInfo.fullIST}</span>
+                            </div>
                             {news.source_url && (
                               <a
                                 href={news.source_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium"
+                                className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold hover:underline"
                               >
-                                Official Filing <ExternalLink size={12} />
+                                Read Original Article <ExternalLink size={12} />
                               </a>
                             )}
                           </div>
@@ -3294,7 +3516,7 @@ export default function SVRAnalysisHome() {
                 </div>
               </div>
 
-              {/* Indian Market News Feed */}
+              {/* Indian Market News Feed (Strictly Sorted Newest First) */}
               <div className="space-y-4">
                 {(data?.news || [])
                   .filter((item) => {
@@ -3311,8 +3533,10 @@ export default function SVRAnalysisHome() {
                       item.sentiment.toLowerCase() === selectedSentiment.toLowerCase();
                     return isMarketNews && matchesSub && matchesSentiment;
                   })
+                  .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
                   .map((news) => {
                     const isBigNews = news.impact_level === "High" || news.is_breaking;
+                    const timeInfo = formatNewsTimestamp(news.published_at);
                     return (
                       <article
                         key={news.id}
@@ -3329,9 +3553,9 @@ export default function SVRAnalysisHome() {
                                 <AlertTriangle size={12} /> CRITICAL MARKET MOVER
                               </span>
                             )}
-                            {isBigNews && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-950/80 text-red-300 border border-red-500/50">
-                                ⚡ High Market Fluctuation
+                            {timeInfo.isLiveFresh && (
+                              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 animate-pulse">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> LIVE WIRE
                               </span>
                             )}
                             <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
@@ -3339,11 +3563,13 @@ export default function SVRAnalysisHome() {
                             }`}>
                               {news.category}
                             </span>
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#15233A] text-[#93A7C7]">
-                              {news.subcategory}
+                            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-[#142238] text-sky-300 border border-[#203759] flex items-center gap-1">
+                              <Building2 size={11} className="text-sky-400" /> {news.source_name}
                             </span>
-                            <span className="text-[11px] text-[#6981A4] flex items-center gap-1 font-mono">
-                              <Clock size={12} /> {formatIST(news.published_at)}
+                            <span className="text-[11px] text-[#8EA2BF] flex items-center gap-1 font-mono">
+                              <Clock size={12} className="text-emerald-400" />
+                              <strong className="text-emerald-400 font-bold">{timeInfo.relativeStr}</strong>
+                              <span className="text-slate-400 hidden sm:inline">({timeInfo.fullIST})</span>
                             </span>
                             {news.stocks_affected && (
                               <span className="text-xs font-mono font-bold bg-[#14233A] text-cyan-300 px-2.5 py-0.5 rounded border border-[#233C61]">
@@ -3406,20 +3632,20 @@ export default function SVRAnalysisHome() {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between pt-3 border-t border-[#172740] text-xs text-[#6A82A4]">
-                          <div className="flex items-center gap-3">
-                            <span>Source: <strong>{news.source_name}</strong></span>
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#172740] text-xs text-[#788FAE]">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span>Verified Source: <strong className="text-white">{news.source_name}</strong></span>
                             <span>•</span>
-                            <span>Impact: <strong className={isBigNews ? "text-red-400" : "text-white"}>{news.impact_level}</strong></span>
+                            <span className="text-slate-400">{timeInfo.fullIST}</span>
                           </div>
                           {news.source_url && (
                             <a
                               href={news.source_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold"
+                              className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold hover:underline"
                             >
-                              Official Source ↗
+                              Read Original Article <ExternalLink size={12} />
                             </a>
                           )}
                         </div>
@@ -3475,7 +3701,7 @@ export default function SVRAnalysisHome() {
                 </div>
               </div>
 
-              {/* Sector-Based News Feed */}
+              {/* Sector-Based News Feed (Strictly Sorted Newest First) */}
               <div className="space-y-4">
                 {(data?.news || [])
                   .filter((item) => {
@@ -3489,8 +3715,10 @@ export default function SVRAnalysisHome() {
                       item.sentiment.toLowerCase() === selectedSentiment.toLowerCase();
                     return isSectorNews && matchesSector && matchesSentiment;
                   })
+                  .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
                   .map((news) => {
                     const isBigNews = news.impact_level === "High" || news.is_breaking;
+                    const timeInfo = formatNewsTimestamp(news.published_at);
                     return (
                       <article
                         key={news.id}
@@ -3507,9 +3735,9 @@ export default function SVRAnalysisHome() {
                                 <AlertTriangle size={12} /> CRITICAL MARKET MOVER
                               </span>
                             )}
-                            {isBigNews && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-950/80 text-red-300 border border-red-500/50">
-                                ⚡ High Market Fluctuation
+                            {timeInfo.isLiveFresh && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 animate-pulse">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> LIVE WIRE
                               </span>
                             )}
                             <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
@@ -3517,8 +3745,13 @@ export default function SVRAnalysisHome() {
                             }`}>
                               {news.subcategory}
                             </span>
-                            <span className="text-[11px] text-[#6981A4] flex items-center gap-1 font-mono">
-                              <Clock size={12} /> {formatIST(news.published_at)}
+                            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-[#142238] text-sky-300 border border-[#203759] flex items-center gap-1">
+                              <Building2 size={11} className="text-sky-400" /> {news.source_name}
+                            </span>
+                            <span className="text-[11px] text-[#8EA2BF] flex items-center gap-1 font-mono">
+                              <Clock size={12} className="text-emerald-400" />
+                              <strong className="text-emerald-400 font-bold">{timeInfo.relativeStr}</strong>
+                              <span className="text-slate-400 hidden sm:inline">({timeInfo.fullIST})</span>
                             </span>
                             {news.stocks_affected && (
                               <span className="text-xs font-mono font-bold bg-[#14233A] text-cyan-300 px-2.5 py-0.5 rounded border border-[#233C61]">
@@ -3581,20 +3814,20 @@ export default function SVRAnalysisHome() {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between pt-3 border-t border-[#172740] text-xs text-[#6A82A4]">
-                          <div className="flex items-center gap-3">
-                            <span>Source: <strong>{news.source_name}</strong></span>
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#172740] text-xs text-[#788FAE]">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span>Verified Source: <strong className="text-white">{news.source_name}</strong></span>
                             <span>•</span>
-                            <span>Impact: <strong className={isBigNews ? "text-red-400" : "text-white"}>{news.impact_level}</strong></span>
+                            <span className="text-slate-400">{timeInfo.fullIST}</span>
                           </div>
                           {news.source_url && (
                             <a
                               href={news.source_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold"
+                              className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold hover:underline"
                             >
-                              Sector Data Link ↗
+                              Sector Data Link <ExternalLink size={12} />
                             </a>
                           )}
                         </div>

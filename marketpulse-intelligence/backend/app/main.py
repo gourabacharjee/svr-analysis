@@ -140,17 +140,28 @@ def update_live_market_quotes():
 
 def sync_authentic_news_rss(db: Session):
     """Fetch authentic Indian stock market & SEBI news via verified financial RSS feeds."""
+    import email.utils
     try:
-        url = "https://news.google.com/rss/search?q=NSE+OR+BSE+OR+SEBI+Indian+stocks+trading&hl=en-IN&gl=IN&ceid=IN:en"
+        url = "https://news.google.com/rss/search?q=(NSE+OR+BSE+OR+Nifty+OR+Sensex+OR+SEBI)+when:2h&hl=en-IN&gl=IN&ceid=IN:en"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         with urllib.request.urlopen(req, timeout=5) as resp:
             root = ET.fromstring(resp.read())
             items = root.findall(".//item")
-            for it in items[:8]:
+            for it in items[:15]:
                 title = it.find("title").text if it.find("title") is not None else ""
                 link = it.find("link").text if it.find("link") is not None else ""
                 source_elem = it.find("source")
                 source_name = source_elem.text if source_elem is not None else "Verified Financial Press"
+                pub_elem = it.find("pubDate")
+                pub_time = datetime.now(timezone.utc)
+                if pub_elem is not None and pub_elem.text:
+                    try:
+                        dt = email.utils.parsedate_to_datetime(pub_elem.text)
+                        if dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=timezone.utc)
+                        pub_time = dt
+                    except Exception:
+                        pass
 
                 if not title or len(title) < 15:
                     continue
@@ -159,8 +170,9 @@ def sync_authentic_news_rss(db: Session):
                 clean_title = title
                 if " - " in title:
                     parts = title.rsplit(" - ", 1)
-                    clean_title = parts[0]
-                    if not source_elem: source_name = parts[1]
+                    clean_title = parts[0].strip()
+                    if not source_elem and len(parts) > 1:
+                        source_name = parts[1].strip()
 
                 # Deduplicate
                 existing = db.query(News).filter(News.headline == clean_title).first()
@@ -228,7 +240,7 @@ def sync_authentic_news_rss(db: Session):
                         actionable_takeaway=takeaway,
                         source_name=source_name,
                         source_url=link,
-                        published_at=datetime.now(timezone.utc),
+                        published_at=pub_time,
                         impact_level=impact,
                         sentiment=sentiment,
                         is_breaking=False,
