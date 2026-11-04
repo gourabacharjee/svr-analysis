@@ -283,25 +283,25 @@ export const INITIAL_SIGNIFICANT_MOVERS: SignificantMover[] = [
     symbol: "RELIANCE",
     company_name: "Reliance Industries Limited",
     sector: "Energy, Telecom & Retail",
-    cmp: 2988.50,
-    prev_close: 2917.00,
-    change_pts: 71.50,
+    cmp: 1311.00,
+    prev_close: 1279.65,
+    change_pts: 31.35,
     change_pct: 2.45,
     tone: "up",
     volume: "15.7M shares",
-    day_high: 3005.00,
-    day_low: 2925.00,
+    day_high: 1318.50,
+    day_low: 1282.00,
     catalyst_type: "Green Energy Capex & O2C",
     causative_headline: "Commissions First Phase of 10GW Electrolyzer Gigafactory; O2C Refining Margins Expand",
     causative_summary: "New Energy business achieves commercial readiness for green hydrogen equipment, while Singapore gross refining margins hit 5-month high at $7.8/bbl.",
-    trader_advantage: "Heavyweight index leadership fuels Nifty 50 rally. Sustained trade above ₹2,950 opens pathway for new all-time highs above ₹3,050.",
+    trader_advantage: "Heavyweight index leadership fuels Nifty 50 rally. Sustained trade above ₹1,300 opens pathway for new post-bonus highs above ₹1,350.",
     action_bias: "Bullish Breakout",
-    support_level: "₹2,930.00",
-    resistance_level: "₹3,050.00",
+    support_level: "₹1,280.00",
+    resistance_level: "₹1,350.00",
     source_name: "Exchange Corporate Announcement",
     source_url: "https://www.bseindia.com/",
     published_at: new Date(Date.now() - 220 * 60000).toISOString(),
-    sparkline: [2917.0, 2935.0, 2960.0, 2955.0, 2980.0, 2988.5]
+    sparkline: [1279.6, 1288.0, 1295.5, 1292.0, 1305.0, 1311.0]
   },
   {
     id: "hdfcbank-12",
@@ -329,3 +329,4 @@ export const INITIAL_SIGNIFICANT_MOVERS: SignificantMover[] = [
     sparkline: [1725.5, 1738.0, 1752.0, 1748.0, 1760.0, 1765.2]
   }
 ];
+

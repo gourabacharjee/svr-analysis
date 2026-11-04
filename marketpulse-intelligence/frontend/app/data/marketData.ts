@@ -6,19 +6,19 @@ export const INITIAL_MARKET_DATA = {
   market_status: "Market Live · Authentic Real-Time Feed Active",
   updated_at: new Date().toISOString(),
   indices: [
-    { name: "NIFTY 50", value: "23,903.35", change: "+92.50 (+0.39%)", tone: "up", high: "23,946.35", low: "23,696.15" },
-    { name: "BANK NIFTY", value: "55,719.40", change: "+179.35 (+0.32%)", tone: "up", high: "55,890.00", low: "55,320.00" },
-    { name: "SENSEX", value: "77,279.93", change: "+362.08 (+0.47%)", tone: "up", high: "77,410.20", low: "76,680.50" },
-    { name: "FIN NIFTY", value: "25,195.40", change: "+75.10 (+0.30%)", tone: "up", high: "25,260.00", low: "25,050.00" },
-    { name: "INDIA VIX", value: "16.02", change: "+0.30 (+1.91%)", tone: "down", high: "16.35", low: "15.45" }
+    { name: "NIFTY 50", value: "23,960.60", change: "+519.80 (+2.22%)", tone: "up", high: "23,960.60", low: "23,696.15" },
+    { name: "BANK NIFTY", value: "55,913.60", change: "+911.40 (+1.66%)", tone: "up", high: "55,946.85", low: "55,294.50" },
+    { name: "SENSEX", value: "77,301.40", change: "+1,608.60 (+2.13%)", tone: "up", high: "77,396.04", low: "76,604.85" },
+    { name: "FIN NIFTY", value: "25,248.80", change: "+412.50 (+1.66%)", tone: "up", high: "25,290.00", low: "24,835.00" },
+    { name: "INDIA VIX", value: "15.19", change: "-0.31 (-2.01%)", tone: "down", high: "16.15", low: "15.13" }
   ],
   global_cues: [
-    { name: "GIFT NIFTY", value: "23,935.00", change: "+55.00 (+0.23%)", tone: "up" },
-    { name: "BRENT CRUDE", value: "$102.82/bbl", change: "-0.78 (-0.75%)", tone: "down" },
-    { name: "USD / INR", value: "94.65", change: "-0.08 (-0.08%)", tone: "up" },
+    { name: "GIFT NIFTY", value: "24,015.00", change: "+545.00 (+2.32%)", tone: "up" },
+    { name: "BRENT CRUDE", value: "$74.65/bbl", change: "-0.78 (-1.03%)", tone: "down" },
+    { name: "USD / INR", value: "84.38", change: "-0.05 (-0.06%)", tone: "up" },
     { name: "US 10-YR YIELD", value: "4.28%", change: "-0.02 (-0.46%)", tone: "down" },
     { name: "DXY (DOLLAR)", value: "104.25", change: "+0.05 (+0.05%)", tone: "neutral" },
-    { name: "GOLD (MCX)", value: "₹78,150/10g", change: "+320 (+0.41%)", tone: "up" }
+    { name: "GOLD (MCX)", value: "₹78,420/10g", change: "+340 (+0.44%)", tone: "up" }
   ],
   market_sentiment: {
     mood: "Cautiously Bullish",

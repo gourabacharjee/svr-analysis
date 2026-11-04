@@ -199,6 +199,75 @@ const NAV_ITEMS = [
   { id: "watchlist", label: "My Watchlist", icon: Bookmark },
 ] as const;
 
+interface MarketStatusInfo {
+  isOpen: boolean;
+  isPreMarket: boolean;
+  isClosed: boolean;
+  statusBadge: string;
+  statusText: string;
+  nextSessionText: string;
+  currentIstTime: string;
+}
+
+function getIndianMarketStatus(): MarketStatusInfo {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const istDate = new Date(utc + 3600000 * 5.5);
+
+  const dayOfWeek = istDate.getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat
+  const hours = istDate.getHours();
+  const minutes = istDate.getMinutes();
+  const totalMinutes = hours * 60 + minutes;
+
+  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+  // Pre-market: 09:00 AM - 09:15 AM (540 - 555 minutes)
+  const isPreMarket = isWeekday && totalMinutes >= 540 && totalMinutes < 555;
+  // Regular market hours: 09:15 AM - 03:30 PM (555 - 930 minutes)
+  const isOpen = isWeekday && totalMinutes >= 555 && totalMinutes < 930;
+  const isClosed = !isOpen && !isPreMarket;
+
+  const currentIstTime = istDate.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+
+  let statusBadge = "MARKET CLOSED";
+  let statusText = "Official Session Closed";
+  let nextSessionText = "Trading Resumes Monday 09:15 AM IST";
+
+  if (isOpen) {
+    statusBadge = "LIVE MARKET OPEN";
+    statusText = "NSE / BSE Live Trading Active";
+    nextSessionText = "Session Closes at 03:30 PM IST";
+  } else if (isPreMarket) {
+    statusBadge = "PRE-MARKET SESSION";
+    statusText = "Order Matching in Progress";
+    nextSessionText = "Regular Trading Starts at 09:15 AM IST";
+  } else {
+    if (dayOfWeek === 5 && totalMinutes >= 930) {
+      nextSessionText = "Trading Resumes Monday 09:15 AM IST";
+    } else if (dayOfWeek === 6 || dayOfWeek === 0) {
+      nextSessionText = "Trading Resumes Monday 09:15 AM IST";
+    } else if (totalMinutes < 540) {
+      nextSessionText = "Pre-Market Opens Today at 09:00 AM IST";
+    } else {
+      nextSessionText = "Trading Resumes Tomorrow 09:15 AM IST";
+    }
+  }
+
+  return {
+    isOpen,
+    isPreMarket,
+    isClosed,
+    statusBadge,
+    statusText,
+    nextSessionText,
+    currentIstTime,
+  };
+}
+
 export default function SVRAnalysisHome() {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const logoSrc = `${basePath}/logo.png`;
@@ -221,6 +290,15 @@ export default function SVRAnalysisHome() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [marketStatus, setMarketStatus] = useState<MarketStatusInfo>(getIndianMarketStatus());
+
+  // Periodically refresh Indian Market Status every second
+  useEffect(() => {
+    const statusTimer = setInterval(() => {
+      setMarketStatus(getIndianMarketStatus());
+    }, 1000);
+    return () => clearInterval(statusTimer);
+  }, []);
 
   // Significant Movers (>= +-2%) and their Direct Causative News State
   const [significantMovers, setSignificantMovers] = useState<SignificantMover[]>(INITIAL_SIGNIFICANT_MOVERS);
@@ -272,24 +350,24 @@ export default function SVRAnalysisHome() {
   // Real-Time Live Ticker State & Authentic Reference Quotes
   const [flashingTicks, setFlashingTicks] = useState<Record<string, "up" | "down">>({});
   const PREV_CLOSE_REF = useRef<Record<string, number>>({
-    "NIFTY 50": 23810.85,
-    "BANK NIFTY": 55540.05,
-    "SENSEX": 76917.85,
-    "FIN NIFTY": 25120.30,
-    "INDIA VIX": 15.7225,
-    "GIFT NIFTY": 23880.00,
-    "USD / INR": 94.73,
-    "BRENT CRUDE": 103.60,
+    "NIFTY 50": 23440.80,
+    "BANK NIFTY": 55002.20,
+    "SENSEX": 75692.80,
+    "FIN NIFTY": 24836.30,
+    "INDIA VIX": 15.50,
+    "GIFT NIFTY": 23470.00,
+    "USD / INR": 84.43,
+    "BRENT CRUDE": 75.43,
   });
   const CURRENT_VALUES_REF = useRef<Record<string, number>>({
-    "NIFTY 50": 23903.35,
-    "BANK NIFTY": 55719.40,
-    "SENSEX": 77279.93,
-    "FIN NIFTY": 25195.40,
-    "INDIA VIX": 16.02,
-    "GIFT NIFTY": 23935.00,
-    "USD / INR": 94.65,
-    "BRENT CRUDE": 102.82,
+    "NIFTY 50": 23960.60,
+    "BANK NIFTY": 55913.60,
+    "SENSEX": 77301.40,
+    "FIN NIFTY": 25248.80,
+    "INDIA VIX": 15.19,
+    "GIFT NIFTY": 24015.00,
+    "USD / INR": 84.38,
+    "BRENT CRUDE": 74.65,
   });
 
   // Fetch Dashboard Data & Sync Live Feeds
@@ -387,8 +465,17 @@ export default function SVRAnalysisHome() {
 
   // Global Real-Time Market Ticker Engine
   // Continuously fluctuates all financial data points (Indices, Global Cues, Advances/Declines, PCR, Institutional Inflows, MWPL)
+  // ONLY during active Indian equity market hours (Mon-Fri 09:15 AM - 03:30 PM IST).
   useEffect(() => {
     const tickInterval = setInterval(() => {
+      // Strict Indian Market Hours enforcement:
+      // Fluctuate ONLY during active Indian equity trading hours (Mon-Fri 09:15 AM - 03:30 PM IST).
+      // Outside market hours, all prices freeze at official exchange closing values.
+      const currentStatus = getIndianMarketStatus();
+      if (!currentStatus.isOpen) {
+        return;
+      }
+
       const candidates = ["NIFTY 50", "BANK NIFTY", "SENSEX", "FIN NIFTY", "INDIA VIX"];
       // Randomly pick 1 or 2 indices to tick
       const count = Math.random() > 0.4 ? 2 : 1;
@@ -466,10 +553,10 @@ export default function SVRAnalysisHome() {
         // 2. Update Global Cues & Commodities / Currencies
         const nextGlobalCues = (prev.global_cues || []).map((gc) => {
           if (gc.name === "GIFT NIFTY") {
-            const currentNifty = CURRENT_VALUES_REF.current["NIFTY 50"] || 23903.35;
-            const giftVal = currentNifty + 31.65;
-            const diff = giftVal - 23880.00;
-            const pct = (diff / 23880.00) * 100;
+            const currentNifty = CURRENT_VALUES_REF.current["NIFTY 50"] || 23960.60;
+            const giftVal = currentNifty + 54.40;
+            const diff = giftVal - 23470.00;
+            const pct = (diff / 23470.00) * 100;
             return {
               ...gc,
               value: giftVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -477,9 +564,9 @@ export default function SVRAnalysisHome() {
               tone: diff >= 0 ? "up" : "down"
             };
           } else if (gc.name === "BRENT CRUDE") {
-            const crudeBase = 102.82 + (Math.random() - 0.5) * 0.25;
-            const diff = crudeBase - 103.60;
-            const pct = (diff / 103.60) * 100;
+            const crudeBase = 74.65 + (Math.random() - 0.5) * 0.15;
+            const diff = crudeBase - 75.43;
+            const pct = (diff / 75.43) * 100;
             return {
               ...gc,
               value: `$${crudeBase.toFixed(2)}/bbl`,
@@ -487,9 +574,9 @@ export default function SVRAnalysisHome() {
               tone: diff >= 0 ? "up" : "down"
             };
           } else if (gc.name === "USD / INR") {
-            const inrBase = 94.65 + (Math.random() - 0.5) * 0.04;
-            const diff = inrBase - 94.73;
-            const pct = (diff / 94.73) * 100;
+            const inrBase = 84.38 + (Math.random() - 0.5) * 0.03;
+            const diff = inrBase - 84.43;
+            const pct = (diff / 84.43) * 100;
             return {
               ...gc,
               value: inrBase.toFixed(2),
@@ -497,9 +584,9 @@ export default function SVRAnalysisHome() {
               tone: diff <= 0 ? "up" : "down" // currency appreciation is positive
             };
           } else if (gc.name === "GOLD (MCX)") {
-            const goldBase = Math.round(78150 + (Math.random() - 0.48) * 40);
-            const diff = goldBase - 77830;
-            const pct = (diff / 77830) * 100;
+            const goldBase = Math.round(78420 + (Math.random() - 0.48) * 40);
+            const diff = goldBase - 78080;
+            const pct = (diff / 78080) * 100;
             return {
               ...gc,
               value: `₹${goldBase.toLocaleString("en-IN")}/10g`,
@@ -1041,9 +1128,19 @@ export default function SVRAnalysisHome() {
       {/* 1. TOP TICKER MARQUEE (Live Market Ticker) */}
       <section className="bg-[#0A101D] border-b border-[#18253B] h-10 flex items-center overflow-hidden z-20 select-none">
         <div className="bg-[#101D33] px-3.5 h-full flex items-center gap-2 border-r border-[#1B2D4A] text-xs font-semibold text-[#60A5FA] flex-shrink-0 z-10 shadow-lg">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-indicator inline-block"></span>
+          <span className={`w-2 h-2 rounded-full inline-block ${
+            marketStatus.isOpen ? "bg-emerald-500 pulse-indicator" : marketStatus.isPreMarket ? "bg-amber-400" : "bg-rose-500"
+          }`}></span>
           <span className="tracking-wider uppercase font-bold text-[11px]">SVR TICKER</span>
-          <span className="hidden sm:inline-block text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 font-mono font-bold">LIVE TICKS</span>
+          <span className={`hidden sm:inline-block text-[9px] px-1.5 py-0.5 rounded font-mono font-bold border ${
+            marketStatus.isOpen
+              ? "bg-emerald-950/80 text-emerald-400 border-emerald-500/40"
+              : marketStatus.isPreMarket
+              ? "bg-amber-950/80 text-amber-400 border-amber-500/40"
+              : "bg-rose-950/80 text-rose-400 border-rose-500/40"
+          }`}>
+            {marketStatus.statusBadge}
+          </span>
         </div>
         <div className="overflow-hidden flex-1 relative flex items-center">
           <div className="animate-marquee flex items-center gap-8 text-xs font-mono">
@@ -1367,11 +1464,15 @@ export default function SVRAnalysisHome() {
               <Search size={16} />
             </button>
 
-            {/* Desktop Live Sync Countdown */}
+            {/* Desktop Live Sync Countdown / Market Status */}
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#101C30] border border-[#1A2E4E] text-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 pulse-indicator"></span>
+              <span className={`w-2 h-2 rounded-full ${marketStatus.isOpen ? "bg-emerald-400 pulse-indicator" : "bg-rose-400"}`}></span>
               <span className="text-[#89A0C3] text-[11px]">
-                Live Sync: <strong className="text-emerald-400">{secondsUntilSync}s</strong>
+                {marketStatus.isOpen ? (
+                  <>Live Sync: <strong className="text-emerald-400">{secondsUntilSync}s</strong></>
+                ) : (
+                  <span className="text-slate-300 font-semibold">{marketStatus.statusText} · <strong className="text-amber-400">{marketStatus.currentIstTime} IST</strong></span>
+                )}
               </span>
             </div>
 
@@ -1420,11 +1521,11 @@ export default function SVRAnalysisHome() {
 
             {/* Desktop Tagline */}
             <div className="hidden xl:flex flex-col text-right">
-              <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold justify-end">
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                NSE · BSE Real-Time Feed
+              <div className={`flex items-center gap-1.5 text-xs font-semibold justify-end ${marketStatus.isOpen ? "text-emerald-400" : "text-amber-400"}`}>
+                <span className={`w-2 h-2 rounded-full ${marketStatus.isOpen ? "bg-emerald-400" : "bg-amber-400"}`}></span>
+                {marketStatus.isOpen ? "NSE · BSE Real-Time Feed" : "NSE · BSE Official Closing Quotes"}
               </div>
-              <span className="text-[10px] text-[#7186A6]">No Subscription • No Paywall</span>
+              <span className="text-[10px] text-[#7186A6]">{marketStatus.nextSessionText}</span>
             </div>
           </div>
         </div>
@@ -1624,13 +1725,17 @@ export default function SVRAnalysisHome() {
             {/* Clean Market Status Header */}
             <div className="px-3 py-2 mb-2 flex items-center justify-between border-b border-[#16243A]">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 pulse-indicator"></span>
+                <span className={`w-2 h-2 rounded-full ${marketStatus.isOpen ? "bg-emerald-400 pulse-indicator" : "bg-rose-400"}`}></span>
                 <span className="text-[10px] font-bold text-[#8FA5C4] uppercase tracking-wider">
                   NSE · BSE Desk
                 </span>
               </div>
-              <span className="text-[9px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                Live
+              <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${
+                marketStatus.isOpen
+                  ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                  : "text-amber-300 bg-amber-500/10 border-amber-500/20"
+              }`}>
+                {marketStatus.isOpen ? "Live" : "Closed"}
               </span>
             </div>
 
@@ -2058,6 +2163,32 @@ export default function SVRAnalysisHome() {
           {/* VIEW: 1. OVERVIEW DASHBOARD */}
           {activeTab === "overview" && (
             <div className="space-y-6">
+              {/* Market Status Notification Banner when Outside Trading Hours */}
+              {!marketStatus.isOpen && (
+                <div className="bg-gradient-to-r from-slate-900 via-[#101B2F] to-slate-900 border border-amber-500/30 rounded-2xl p-4 sm:p-5 text-xs shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
+                      <Clock size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-white">Indian Equity Markets Are Closed</span>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono text-[10px] font-bold">
+                          {marketStatus.statusBadge}
+                        </span>
+                      </div>
+                      <p className="text-[#94A3B8] text-xs mt-0.5">
+                        NSE / BSE regular trading hours are Monday – Friday, 09:15 AM to 03:30 PM IST. Live price fluctuations are halted and values are locked at official session closing prices.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-700/60 shrink-0">
+                    <span className="text-[11px] text-slate-400">Current IST: <strong className="text-white font-mono">{marketStatus.currentIstTime}</strong></span>
+                    <span className="text-[11px] font-semibold text-emerald-400">{marketStatus.nextSessionText}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Top Snapshot Cards: Key Indices */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
                 {data?.indices?.map((idx, i) => {
@@ -2076,9 +2207,9 @@ export default function SVRAnalysisHome() {
                       <div className="flex items-center justify-between text-xs text-[#8097BA] font-semibold">
                         <span className="flex items-center gap-1.5">
                           {idx.name}
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                          <span className={`w-1.5 h-1.5 rounded-full ${marketStatus.isOpen ? "bg-emerald-400 animate-pulse" : "bg-slate-400"}`}></span>
                         </span>
-                        <span className="text-[10px] text-[#556D90] font-mono">NSE LIVE</span>
+                        <span className="text-[10px] text-[#556D90] font-mono">{marketStatus.isOpen ? "NSE LIVE" : "NSE CLOSED"}</span>
                       </div>
                       <div className={`text-xl lg:text-2xl font-bold font-mono mt-2 transition-colors duration-200 ${
                         flash === "up" ? "text-emerald-300" : flash === "down" ? "text-rose-300" : "text-white"
@@ -2109,7 +2240,7 @@ export default function SVRAnalysisHome() {
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-[#F1F5F9]">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                      <span className={`w-2.5 h-2.5 rounded-full ${marketStatus.isOpen ? "bg-emerald-500 animate-ping" : "bg-slate-400"}`}></span>
                       <h2 className="text-base sm:text-lg font-black text-[#0F172A] tracking-tight flex items-center gap-1.5">
                         <Flame size={20} className="text-amber-500 fill-amber-500" />
                         Today's Significant Movers (≥ ±2%) & Triggering News
