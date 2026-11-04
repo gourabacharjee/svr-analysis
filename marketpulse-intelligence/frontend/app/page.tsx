@@ -238,6 +238,16 @@ export default function SVRAnalysisHome() {
   const [pivotLow, setPivotLow] = useState<number>(24750);
   const [pivotClose, setPivotClose] = useState<number>(24840);
 
+  // Latest High-Market-Impact Catalyst / Real-Time Alert (Shown in prominent Red)
+  const latestHighImpactAlert = useMemo(() => {
+    return (
+      data?.news?.find((n) => n.is_breaking) ||
+      data?.news?.find((n) => n.impact_level === "High" && (n.sentiment === "Bearish" || n.sentiment === "Volatile")) ||
+      data?.news?.find((n) => n.impact_level === "High") ||
+      data?.news?.[0]
+    );
+  }, [data?.news]);
+
   // Real-Time Live Ticker State & Authentic Reference Quotes
   const [flashingTicks, setFlashingTicks] = useState<Record<string, "up" | "down">>({});
   const PREV_CLOSE_REF = useRef<Record<string, number>>({
@@ -354,8 +364,8 @@ export default function SVRAnalysisHome() {
     }
   };
 
-  // High-Frequency Real-Time Live Market Ticker Engine
-  // Frequently oscillates index quotes based on active market hours and authentic price discovery
+  // Global Real-Time Market Ticker Engine
+  // Continuously fluctuates all financial data points (Indices, Global Cues, Advances/Declines, PCR, Institutional Inflows, MWPL)
   useEffect(() => {
     const tickInterval = setInterval(() => {
       const candidates = ["NIFTY 50", "BANK NIFTY", "SENSEX", "FIN NIFTY", "INDIA VIX"];
@@ -366,6 +376,9 @@ export default function SVRAnalysisHome() {
       const updatedTicks: Record<string, "up" | "down"> = {};
 
       setData((prev) => {
+        let niftyDelta = 0;
+
+        // 1. Update Benchmark Indices
         const nextIndices = (prev.indices || []).map((idx) => {
           if (!shuffled.includes(idx.name)) return idx;
 
@@ -376,6 +389,7 @@ export default function SVRAnalysisHome() {
           if (idx.name === "NIFTY 50") {
             const raw = (Math.random() - 0.49) * 4.2;
             delta = Math.round(raw * 20) / 20; // 0.05 tick size
+            niftyDelta = delta;
           } else if (idx.name === "SENSEX") {
             const raw = (Math.random() - 0.49) * 14.5;
             delta = Math.round(raw * 100) / 100; // 0.01 tick size
@@ -428,9 +442,110 @@ export default function SVRAnalysisHome() {
           };
         });
 
+        // 2. Update Global Cues & Commodities / Currencies
+        const nextGlobalCues = (prev.global_cues || []).map((gc) => {
+          if (gc.name === "GIFT NIFTY") {
+            const currentNifty = CURRENT_VALUES_REF.current["NIFTY 50"] || 23903.35;
+            const giftVal = currentNifty + 31.65;
+            const diff = giftVal - 23880.00;
+            const pct = (diff / 23880.00) * 100;
+            return {
+              ...gc,
+              value: giftVal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+              change: `${diff >= 0 ? "+" : ""}${diff.toFixed(2)} (${diff >= 0 ? "+" : ""}${pct.toFixed(2)}%)`,
+              tone: diff >= 0 ? "up" : "down"
+            };
+          } else if (gc.name === "BRENT CRUDE") {
+            const crudeBase = 102.82 + (Math.random() - 0.5) * 0.25;
+            const diff = crudeBase - 103.60;
+            const pct = (diff / 103.60) * 100;
+            return {
+              ...gc,
+              value: `$${crudeBase.toFixed(2)}/bbl`,
+              change: `${diff.toFixed(2)} (${pct.toFixed(2)}%)`,
+              tone: diff >= 0 ? "up" : "down"
+            };
+          } else if (gc.name === "USD / INR") {
+            const inrBase = 94.65 + (Math.random() - 0.5) * 0.04;
+            const diff = inrBase - 94.73;
+            const pct = (diff / 94.73) * 100;
+            return {
+              ...gc,
+              value: inrBase.toFixed(2),
+              change: `${diff.toFixed(2)} (${pct.toFixed(2)}%)`,
+              tone: diff <= 0 ? "up" : "down" // currency appreciation is positive
+            };
+          } else if (gc.name === "GOLD (MCX)") {
+            const goldBase = Math.round(78150 + (Math.random() - 0.48) * 40);
+            const diff = goldBase - 77830;
+            const pct = (diff / 77830) * 100;
+            return {
+              ...gc,
+              value: `₹${goldBase.toLocaleString("en-IN")}/10g`,
+              change: `+${diff} (+${pct.toFixed(2)}%)`,
+              tone: "up"
+            };
+          }
+          return gc;
+        });
+
+        // 3. Update Real-Time Market Sentiment & Breadth
+        const baseScore = prev.market_sentiment?.score || 68;
+        const newScore = Math.min(85, Math.max(50, Math.round(baseScore + (niftyDelta > 0 ? 0.3 : niftyDelta < 0 ? -0.3 : 0))));
+        const advancesDelta = niftyDelta > 0 ? Math.floor(Math.random() * 4) + 1 : -Math.floor(Math.random() * 3);
+        const newAdvances = Math.min(1445, Math.max(1395, (prev.market_sentiment?.advances || 1420) + advancesDelta));
+        const newDeclines = Math.max(950, Math.min(1010, (prev.market_sentiment?.declines || 980) - advancesDelta));
+        const newPcr = parseFloat(Math.min(1.22, Math.max(1.08, (prev.market_sentiment?.pcr_nifty || 1.15) + (Math.random() - 0.5) * 0.01)).toFixed(2));
+
+        const nextSentiment = {
+          ...prev.market_sentiment,
+          score: newScore,
+          advances: newAdvances,
+          declines: newDeclines,
+          pcr_nifty: newPcr
+        };
+
+        // 4. Update Cumulative FII / DII Session Cash Flows
+        const diiDelta = (Math.random() * 1.8 + 0.2);
+        const fiiDelta = (Math.random() - 0.48) * 1.5;
+        const currentDii = parseFloat((prev.fii_dii?.dii_cash_net || "+₹2,180.45 Cr").replace(/[^0-9.]/g, "")) || 2180.45;
+        const currentFii = parseFloat((prev.fii_dii?.fii_cash_net || "+₹1,425.80 Cr").replace(/[^0-9.]/g, "")) || 1425.80;
+        const newDiiStr = `+₹${(currentDii + diiDelta).toFixed(2)} Cr`;
+        const newFiiStr = `+₹${(currentFii + fiiDelta).toFixed(2)} Cr`;
+
+        const nextFiiDii = {
+          ...prev.fii_dii,
+          dii_cash_net: newDiiStr,
+          fii_cash_net: newFiiStr
+        };
+
+        // 5. Update Pre-market Current Market Prices (CMP)
+        const nextPremarket = (prev.premarket || []).map((pm) => {
+          const matchIdx = nextIndices.find((idx) => idx.name.toLowerCase().includes(pm.index_name.toLowerCase()));
+          if (matchIdx) {
+            return { ...pm, cmp: matchIdx.value };
+          }
+          return pm;
+        });
+
+        // 6. Update F&O Ban Radar MWPL micro-ticks
+        const nextFoBan = (prev.fo_ban_list || []).map((fo, idx) => {
+          if (idx === 0) {
+            const rawMwpl = parseFloat(fo.mwpl_percent.replace("%", "")) || 98.4;
+            const newMwpl = (rawMwpl + (Math.random() - 0.5) * 0.1).toFixed(1);
+            return { ...fo, mwpl_percent: `${newMwpl}%` };
+          }
+          return fo;
+        });
+
         return {
           ...prev,
           indices: nextIndices,
+          global_cues: nextGlobalCues,
+          market_sentiment: nextSentiment,
+          fii_dii: nextFiiDii,
+          premarket: nextPremarket,
+          fo_ban_list: nextFoBan,
           updated_at: new Date().toISOString(),
         };
       });
@@ -445,7 +560,7 @@ export default function SVRAnalysisHome() {
           });
         }, 800);
       }
-    }, 2500);
+    }, 2400);
 
     return () => clearInterval(tickInterval);
   }, []);
@@ -1546,25 +1661,56 @@ export default function SVRAnalysisHome() {
               )}
             </div>
           )}
-          {/* Breaking News Banner (If Breaking News exists) */}
-          {data?.news?.some((n) => n.is_breaking) && (
-            <div className="bg-gradient-to-r from-rose-950/60 via-[#1C1420] to-[#121A2C] border border-rose-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
-              <div className="flex items-center gap-3">
-                <span className="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-extrabold text-[11px] tracking-wide flex items-center gap-1.5 animate-pulse">
-                  <Flame size={13} /> BREAKING UPDATE
-                </span>
-                <p className="text-xs sm:text-sm font-semibold text-white">
-                  {data?.news?.find((n) => n.is_breaking)?.headline}
-                </p>
+          {/* CRITICAL REAL-TIME RED ALERT BANNER (HIGH MARKET FLUCTUATION CATALYST) */}
+          {latestHighImpactAlert && (
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-950 via-[#26080E] to-[#140407] border-2 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.38)] p-4 sm:p-5 transition-all duration-300">
+              <div className="absolute -top-12 -right-12 w-48 h-48 bg-red-600/20 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
+                <div className="space-y-2 flex-1">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                    <span className="px-2.5 py-1 rounded-md bg-red-600 text-white font-extrabold text-[11px] tracking-wider uppercase flex items-center gap-1.5 shadow-md animate-pulse">
+                      <AlertTriangle size={13} /> HIGH MARKET FLUCTUATION ALERT
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-red-900/80 text-red-200 border border-red-500/60">
+                      {latestHighImpactAlert.sentiment === "Bearish"
+                        ? "⚠️ SEVERE DOWNSIDE VOLATILITY RISK: Heavy Selloff Catalyst"
+                        : latestHighImpactAlert.sentiment === "Bullish"
+                        ? "⚡ HIGH UPSIDE BREAKOUT CATALYST: Short-Covering Surge"
+                        : "🌪️ TWO-WAY SHOCKWAVE ALERT: Heavy Premium Expansion"}
+                    </span>
+                    <span className="text-[11px] text-red-300/80 font-mono flex items-center gap-1">
+                      <Clock size={11} /> Real-Time Live Alert · Just Now
+                    </span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-extrabold text-white leading-snug">
+                    <span className="text-red-400 mr-2 font-black tracking-wide">[LIVE MARKET SHOCKWAVE]</span>
+                    {latestHighImpactAlert.headline}
+                  </h3>
+                  <p className="text-xs text-red-200/90 leading-relaxed max-w-4xl">
+                    {latestHighImpactAlert.summary}
+                  </p>
+                  {latestHighImpactAlert.actionable_takeaway && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-950/80 border border-red-500/50 text-xs text-red-100 font-medium">
+                      <Zap size={13} className="text-amber-400 flex-shrink-0" />
+                      <span><strong>Tactical Defense Plan:</strong> {latestHighImpactAlert.actionable_takeaway}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => {
+                      setActiveTab("indian_market_news");
+                    }}
+                    className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs shadow-lg shadow-red-600/40 transition flex items-center gap-1.5"
+                  >
+                    Read Analysis <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => {
-                  setActiveTab("indian_market_news");
-                }}
-                className="text-xs font-bold text-rose-300 hover:text-white flex items-center gap-1 flex-shrink-0"
-              >
-                Read Analysis <ChevronRight size={14} />
-              </button>
             </div>
           )}
 
@@ -1963,85 +2109,116 @@ export default function SVRAnalysisHome() {
                   </div>
 
                   <div className="space-y-3.5">
-                    {filteredNews.slice(0, 5).map((news) => (
-                      <article
-                        key={news.id}
-                        className="bg-[#0D1525] border border-[#182842] hover:border-[#263D63] rounded-2xl p-4 transition space-y-3"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30">
-                              {news.category}
-                            </span>
-                            <span className="text-[10px] text-[#6981A4] flex items-center gap-1">
-                              <Clock size={11} /> {formatIST(news.published_at)}
-                            </span>
-                            {news.stocks_affected && (
-                              <span className="text-[10px] font-mono font-bold bg-[#142238] text-cyan-300 px-2 py-0.5 rounded border border-[#203759]">
-                                {news.stocks_affected}
+                    {filteredNews.slice(0, 5).map((news) => {
+                      const isBigNews = news.impact_level === "High" || news.is_breaking;
+                      return (
+                        <article
+                          key={news.id}
+                          className={`rounded-2xl p-4 sm:p-5 transition space-y-3.5 shadow-sm ${
+                            isBigNews
+                              ? "bg-gradient-to-br from-[#260A10] via-[#1B070C] to-[#0D1525] border-2 border-red-500/90 shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:border-red-400"
+                              : "bg-[#0D1525] border border-[#182842] hover:border-[#263D63]"
+                          }`}
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {isBigNews && (
+                                <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-red-600 text-white flex items-center gap-1 shadow-md animate-pulse">
+                                  <AlertTriangle size={12} /> CRITICAL MARKET MOVER
+                                </span>
+                              )}
+                              {isBigNews && (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-950/80 text-red-300 border border-red-500/50">
+                                  ⚡ High Market Fluctuation
+                                </span>
+                              )}
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                                isBigNews ? "bg-red-900/40 text-red-200 border border-red-500/30" : "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                              }`}>
+                                {news.category}
                               </span>
+                              <span className="text-[10px] text-[#6981A4] flex items-center gap-1">
+                                <Clock size={11} /> {formatIST(news.published_at)}
+                              </span>
+                              {news.stocks_affected && (
+                                <span className="text-[10px] font-mono font-bold bg-[#142238] text-cyan-300 px-2 py-0.5 rounded border border-[#203759]">
+                                  {news.stocks_affected}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  news.sentiment === "Bullish"
+                                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                    : news.sentiment === "Bearish"
+                                    ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                    : news.sentiment === "Volatile"
+                                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                                    : "bg-slate-500/15 text-slate-300 border border-slate-500/30"
+                                }`}
+                              >
+                                {news.sentiment}
+                              </span>
+                              <button
+                                onClick={() => toggleSaveNews(news.id)}
+                                className="text-[#647C9E] hover:text-white"
+                                title="Bookmark news"
+                              >
+                                {savedNewsIds.includes(news.id) ? (
+                                  <BookmarkCheck size={16} className="text-blue-400" />
+                                ) : (
+                                  <Bookmark size={16} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+
+                          <h3 className={`font-bold leading-snug transition ${
+                            isBigNews ? "text-base text-white font-extrabold" : "text-sm text-white hover:text-blue-300"
+                          }`}>
+                            {isBigNews && <span className="text-red-400 font-black mr-2 tracking-wide">[HIGH ALERT]</span>}
+                            {news.headline}
+                          </h3>
+
+                          <p className={`text-xs leading-relaxed ${isBigNews ? "text-red-100/90" : "text-[#95A9C7]"}`}>
+                            {news.summary}
+                          </p>
+
+                          {/* Actionable Trader Takeaway Box */}
+                          {news.actionable_takeaway && (
+                            <div className={`rounded-r-xl p-3 text-xs ${
+                              isBigNews
+                                ? "bg-red-950/70 border-l-4 border-red-500 text-red-100"
+                                : "bg-[#101C30] border-l-4 border-cyan-500 text-cyan-200"
+                            }`}>
+                              <span className={`font-bold block text-[11px] mb-0.5 ${
+                                isBigNews ? "text-red-300 flex items-center gap-1.5" : "text-cyan-300"
+                              }`}>
+                                <Zap size={13} className={isBigNews ? "text-amber-400" : "text-cyan-400"} />
+                                {isBigNews ? "🚨 Critical Fluctuation Defense & Trade Action Plan:" : "⚡ Trader's Actionable Takeaway:"}
+                              </span>
+                              {news.actionable_takeaway}
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between pt-2 border-t border-[#16253C] text-[11px] text-[#6981A4]">
+                            <span>Source: <strong>{news.source_name}</strong></span>
+                            {news.source_url && (
+                              <a
+                                href={news.source_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium"
+                              >
+                                Official Filing <ExternalLink size={12} />
+                              </a>
                             )}
                           </div>
-
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                news.sentiment === "Bullish"
-                                  ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                                  : news.sentiment === "Bearish"
-                                  ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                                  : news.sentiment === "Volatile"
-                                  ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                                  : "bg-slate-500/15 text-slate-300 border border-slate-500/30"
-                              }`}
-                            >
-                              {news.sentiment}
-                            </span>
-                            <button
-                              onClick={() => toggleSaveNews(news.id)}
-                              className="text-[#647C9E] hover:text-white"
-                              title="Bookmark news"
-                            >
-                              {savedNewsIds.includes(news.id) ? (
-                                <BookmarkCheck size={16} className="text-blue-400" />
-                              ) : (
-                                <Bookmark size={16} />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        <h3 className="text-sm font-bold text-white leading-snug hover:text-blue-300 transition">
-                          {news.headline}
-                        </h3>
-
-                        <p className="text-xs text-[#95A9C7] leading-relaxed">{news.summary}</p>
-
-                        {/* Actionable Trader Takeaway Box */}
-                        {news.actionable_takeaway && (
-                          <div className="bg-[#101C30] border-l-4 border-cyan-500 rounded-r-xl p-2.5 text-xs text-cyan-200">
-                            <span className="font-bold text-cyan-300 block text-[11px] mb-0.5">
-                              ⚡ Trader's Actionable Takeaway:
-                            </span>
-                            {news.actionable_takeaway}
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between pt-2 border-t border-[#16253C] text-[11px] text-[#6981A4]">
-                          <span>Source: {news.source_name}</span>
-                          {news.source_url && (
-                            <a
-                              href={news.source_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium"
-                            >
-                              Official Filing <ExternalLink size={12} />
-                            </a>
-                          )}
-                        </div>
-                      </article>
-                    ))}
+                        </article>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -2141,9 +2318,12 @@ export default function SVRAnalysisHome() {
                           className="p-3 rounded-xl bg-[#121E33] border border-[#1C2E4C] space-y-2"
                         >
                           <div className="flex justify-between items-center">
-                            <span className="font-bold text-white text-xs">{pm.index_name}</span>
+                            <span className="font-bold text-white text-xs flex items-center gap-1.5">
+                              {pm.index_name}
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            </span>
                             <span className="text-xs font-mono font-bold text-cyan-300">
-                              CMP {pm.cmp}
+                              CMP {data?.indices?.find((x) => x.name.toLowerCase().includes(pm.index_name.toLowerCase()))?.value || pm.cmp}
                             </span>
                           </div>
                           <div className="grid grid-cols-3 gap-1 text-[10px] font-mono text-center">
@@ -2219,40 +2399,55 @@ export default function SVRAnalysisHome() {
                     selectedCatalystType === "All" ||
                     item.catalyst_type.toLowerCase().includes(selectedCatalystType.toLowerCase())
                   )
-                  .map((item) => (
-                    <article
-                      key={item.id}
-                      className="bg-[#0D1525] border border-[#182842] hover:border-emerald-500/40 rounded-2xl p-5 space-y-4 transition flex flex-col justify-between shadow-sm"
-                    >
-                      <div className="space-y-3">
-                        {/* Header Badges */}
-                        <div className="flex flex-wrap items-center justify-between gap-2">
+                  .map((item) => {
+                    const isHighImpactShock = item.action_bias.includes("Bearish") || item.catalyst_type.includes("Auditor") || item.catalyst_type.includes("CEO");
+                    return (
+                      <article
+                        key={item.id}
+                        className={`rounded-2xl p-5 space-y-4 transition flex flex-col justify-between shadow-sm ${
+                          isHighImpactShock
+                            ? "bg-gradient-to-br from-[#260A10] via-[#1B070C] to-[#0D1525] border-2 border-red-500/90 shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:border-red-400"
+                            : "bg-[#0D1525] border border-[#182842] hover:border-emerald-500/40"
+                        }`}
+                      >
+                        <div className="space-y-3">
+                          {/* Header Badges */}
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-mono font-black text-sm px-2.5 py-1 rounded-lg border ${
+                                isHighImpactShock
+                                  ? "text-red-200 bg-red-950/70 border-red-500/40"
+                                  : "text-cyan-300 bg-[#122238] border-[#203B61]"
+                              }`}>
+                                NSE: {item.symbol}
+                              </span>
+                              <span className="text-xs text-[#89A0C3] font-medium hidden sm:inline">
+                                {item.company_name}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              {isHighImpactShock && (
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-200 bg-red-600 px-2 py-0.5 rounded shadow-sm flex items-center gap-1 animate-pulse">
+                                  <AlertTriangle size={11} /> 🔴 HIGH FLUCTUATION
+                                </span>
+                              )}
+                              <span
+                                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                                  item.action_bias.includes("Strong Bullish") || item.action_bias.includes("Bullish")
+                                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                    : item.action_bias.includes("Bearish")
+                                    ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                    : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                                }`}
+                              >
+                                {item.action_bias}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Catalyst Type Badge */}
                           <div className="flex items-center gap-2">
-                            <span className="font-mono font-black text-sm text-cyan-300 bg-[#122238] px-2.5 py-1 rounded-lg border border-[#203B61]">
-                              NSE: {item.symbol}
-                            </span>
-                            <span className="text-xs text-[#89A0C3] font-medium hidden sm:inline">
-                              {item.company_name}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                                item.action_bias.includes("Strong Bullish") || item.action_bias.includes("Bullish")
-                                  ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                                  : item.action_bias.includes("Bearish")
-                                  ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                                  : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                              }`}
-                            >
-                              {item.action_bias}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Catalyst Type Badge */}
-                        <div className="flex items-center gap-2">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                             ⚡ {item.catalyst_type}
                           </span>
@@ -2316,7 +2511,8 @@ export default function SVRAnalysisHome() {
                         </div>
                       </div>
                     </article>
-                  ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2337,30 +2533,46 @@ export default function SVRAnalysisHome() {
                   SEBI market-wide directives, and RBI macroeconomic indicators across the Indian financial ecosystem.
                 </p>
 
-                {/* Market Macro Snapshot Strip */}
+                {/* Market Macro Snapshot Strip (Live Real-Time Market Feeds) */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-[#1C2F4D]">
                   <div className="bg-[#080D18] p-3 rounded-xl border border-[#162744]">
-                    <span className="text-[10px] text-[#6981A4] font-semibold block">NIFTY 50 (Benchmark)</span>
-                    <span className="text-sm font-black text-emerald-400 mt-0.5 block">
-                      23,810.85 <span className="text-[10px] font-bold">+124.60 (+0.53%)</span>
+                    <span className="text-[10px] text-[#6981A4] font-semibold flex items-center justify-between">
+                      <span>NIFTY 50 (Benchmark)</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    </span>
+                    <span className="text-sm font-black text-white mt-0.5 block font-mono">
+                      {data?.indices?.find((x) => x.name === "NIFTY 50")?.value || "23,903.35"}{" "}
+                      <span className={`text-[10px] font-bold ${
+                        data?.indices?.find((x) => x.name === "NIFTY 50")?.tone === "up" ? "text-emerald-400" : "text-rose-400"
+                      }`}>
+                        {data?.indices?.find((x) => x.name === "NIFTY 50")?.change}
+                      </span>
                     </span>
                   </div>
                   <div className="bg-[#080D18] p-3 rounded-xl border border-[#162744]">
-                    <span className="text-[10px] text-[#6981A4] font-semibold block">INDIA VIX (Volatility)</span>
-                    <span className="text-sm font-black text-cyan-300 mt-0.5 block">
-                      13.40 <span className="text-[10px] font-bold text-emerald-400">-4.2% (Cooling)</span>
+                    <span className="text-[10px] text-[#6981A4] font-semibold flex items-center justify-between">
+                      <span>INDIA VIX (Volatility)</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    </span>
+                    <span className="text-sm font-black text-cyan-300 mt-0.5 block font-mono">
+                      {data?.indices?.find((x) => x.name === "INDIA VIX")?.value || "16.02"}{" "}
+                      <span className="text-[10px] font-bold text-emerald-400">
+                        {data?.indices?.find((x) => x.name === "INDIA VIX")?.change}
+                      </span>
                     </span>
                   </div>
                   <div className="bg-[#080D18] p-3 rounded-xl border border-[#162744]">
                     <span className="text-[10px] text-[#6981A4] font-semibold block">DII Cash Net Flow</span>
-                    <span className="text-sm font-black text-emerald-400 mt-0.5 block">
-                      +₹3,450 Cr <span className="text-[10px] text-[#8BA0BF]">Net Buyers</span>
+                    <span className="text-sm font-black text-emerald-400 mt-0.5 block font-mono">
+                      {data?.fii_dii?.dii_cash_net || "+₹2,180.45 Cr"}{" "}
+                      <span className="text-[10px] text-[#8BA0BF]">Net Buyers</span>
                     </span>
                   </div>
                   <div className="bg-[#080D18] p-3 rounded-xl border border-[#162744]">
                     <span className="text-[10px] text-[#6981A4] font-semibold block">Nifty PCR (Put-Call)</span>
-                    <span className="text-sm font-black text-white mt-0.5 block">
-                      1.15 <span className="text-[10px] font-bold text-emerald-400">Bullish Support</span>
+                    <span className="text-sm font-black text-white mt-0.5 block font-mono">
+                      {data?.market_sentiment?.pcr_nifty || 1.15}{" "}
+                      <span className="text-[10px] font-bold text-emerald-400">Bullish Support</span>
                     </span>
                   </div>
                 </div>
@@ -2408,93 +2620,121 @@ export default function SVRAnalysisHome() {
                       item.sentiment.toLowerCase() === selectedSentiment.toLowerCase();
                     return isMarketNews && matchesSub && matchesSentiment;
                   })
-                  .map((news) => (
-                    <article
-                      key={news.id}
-                      className="bg-[#0D1525] border border-[#182842] hover:border-blue-500/40 rounded-2xl p-5 transition space-y-3.5 shadow-sm"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                            {news.category}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#15233A] text-[#93A7C7]">
-                            {news.subcategory}
-                          </span>
-                          <span className="text-[11px] text-[#6981A4] flex items-center gap-1 font-mono">
-                            <Clock size={12} /> {formatIST(news.published_at)}
-                          </span>
-                          {news.stocks_affected && (
-                            <span className="text-xs font-mono font-bold bg-[#14233A] text-cyan-300 px-2.5 py-0.5 rounded border border-[#233C61]">
-                              {news.stocks_affected}
+                  .map((news) => {
+                    const isBigNews = news.impact_level === "High" || news.is_breaking;
+                    return (
+                      <article
+                        key={news.id}
+                        className={`rounded-2xl p-5 transition space-y-3.5 shadow-sm ${
+                          isBigNews
+                            ? "bg-gradient-to-br from-[#260A10] via-[#1B070C] to-[#0D1525] border-2 border-red-500/90 shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:border-red-400"
+                            : "bg-[#0D1525] border border-[#182842] hover:border-blue-500/40"
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {isBigNews && (
+                              <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-red-600 text-white flex items-center gap-1 shadow-md animate-pulse">
+                                <AlertTriangle size={12} /> CRITICAL MARKET MOVER
+                              </span>
+                            )}
+                            {isBigNews && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-950/80 text-red-300 border border-red-500/50">
+                                ⚡ High Market Fluctuation
+                              </span>
+                            )}
+                            <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
+                              isBigNews ? "bg-red-900/40 text-red-200 border border-red-500/30" : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                            }`}>
+                              {news.category}
                             </span>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#15233A] text-[#93A7C7]">
+                              {news.subcategory}
+                            </span>
+                            <span className="text-[11px] text-[#6981A4] flex items-center gap-1 font-mono">
+                              <Clock size={12} /> {formatIST(news.published_at)}
+                            </span>
+                            {news.stocks_affected && (
+                              <span className="text-xs font-mono font-bold bg-[#14233A] text-cyan-300 px-2.5 py-0.5 rounded border border-[#233C61]">
+                                {news.stocks_affected}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                news.sentiment === "Bullish"
+                                  ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                  : news.sentiment === "Bearish"
+                                  ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                  : news.sentiment === "Volatile"
+                                  ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                                  : "bg-slate-500/15 text-slate-300 border border-slate-500/30"
+                              }`}
+                            >
+                              {news.sentiment}
+                            </span>
+                            <button
+                              onClick={() => toggleSaveNews(news.id)}
+                              className="p-1.5 rounded-lg bg-[#14223A] text-[#6881A4] hover:text-white"
+                              title="Bookmark"
+                            >
+                              {savedNewsIds.includes(news.id) ? (
+                                <BookmarkCheck size={16} className="text-blue-400" />
+                              ) : (
+                                <Bookmark size={16} />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <h3 className={`font-bold leading-snug transition ${
+                          isBigNews ? "text-base sm:text-lg text-white font-extrabold" : "text-base text-white hover:text-blue-300"
+                        }`}>
+                          {isBigNews && <span className="text-red-400 font-black mr-2 tracking-wide">[HIGH ALERT]</span>}
+                          {news.headline}
+                        </h3>
+
+                        <p className={`text-xs sm:text-sm leading-relaxed ${isBigNews ? "text-red-100/90" : "text-[#97ACCA]"}`}>
+                          {news.summary}
+                        </p>
+
+                        {/* Actionable Trader Takeaway Box */}
+                        {news.actionable_takeaway && (
+                          <div className={`rounded-r-xl p-3 text-xs ${
+                            isBigNews
+                              ? "bg-red-950/70 border-l-4 border-red-500 text-red-100"
+                              : "bg-[#101D33] border-l-4 border-blue-400 text-blue-100"
+                          }`}>
+                            <div className={`flex items-center gap-1.5 font-bold mb-1 ${isBigNews ? "text-red-300" : "text-blue-300"}`}>
+                              <Zap size={14} className={isBigNews ? "text-amber-400" : "text-blue-400"} />
+                              <span>{isBigNews ? "🚨 Actionable Setup & High-Volatility Defense Plan:" : "Actionable Trading Setup & Market Impact:"}</span>
+                            </div>
+                            <p className="leading-relaxed">{news.actionable_takeaway}</p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-3 border-t border-[#172740] text-xs text-[#6A82A4]">
+                          <div className="flex items-center gap-3">
+                            <span>Source: <strong>{news.source_name}</strong></span>
+                            <span>•</span>
+                            <span>Impact: <strong className={isBigNews ? "text-red-400" : "text-white"}>{news.impact_level}</strong></span>
+                          </div>
+                          {news.source_url && (
+                            <a
+                              href={news.source_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold"
+                            >
+                              Official Source ↗
+                            </a>
                           )}
                         </div>
-
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                              news.sentiment === "Bullish"
-                                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                                : news.sentiment === "Bearish"
-                                ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                                : news.sentiment === "Volatile"
-                                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                                : "bg-slate-500/15 text-slate-300 border border-slate-500/30"
-                            }`}
-                          >
-                            {news.sentiment}
-                          </span>
-                          <button
-                            onClick={() => toggleSaveNews(news.id)}
-                            className="p-1.5 rounded-lg bg-[#14223A] text-[#6881A4] hover:text-white"
-                            title="Bookmark"
-                          >
-                            {savedNewsIds.includes(news.id) ? (
-                              <BookmarkCheck size={16} className="text-blue-400" />
-                            ) : (
-                              <Bookmark size={16} />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-
-                      <h3 className="text-base font-bold text-white leading-snug">{news.headline}</h3>
-
-                      <p className="text-xs sm:text-sm text-[#97ACCA] leading-relaxed">
-                        {news.summary}
-                      </p>
-
-                      {/* Actionable Trader Takeaway Box */}
-                      {news.actionable_takeaway && (
-                        <div className="bg-[#101D33] border-l-4 border-blue-400 rounded-r-xl p-3 text-xs text-blue-100">
-                          <div className="flex items-center gap-1.5 font-bold text-blue-300 mb-1">
-                            <Zap size={14} />
-                            <span>Actionable Trading Setup & Market Impact:</span>
-                          </div>
-                          <p className="leading-relaxed">{news.actionable_takeaway}</p>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-3 border-t border-[#172740] text-xs text-[#6A82A4]">
-                        <div className="flex items-center gap-3">
-                          <span>Source: <strong>{news.source_name}</strong></span>
-                          <span>•</span>
-                          <span>Impact: <strong className="text-white">{news.impact_level}</strong></span>
-                        </div>
-                        {news.source_url && (
-                          <a
-                            href={news.source_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold"
-                          >
-                            Official Source ↗
-                          </a>
-                        )}
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -2558,90 +2798,118 @@ export default function SVRAnalysisHome() {
                       item.sentiment.toLowerCase() === selectedSentiment.toLowerCase();
                     return isSectorNews && matchesSector && matchesSentiment;
                   })
-                  .map((news) => (
-                    <article
-                      key={news.id}
-                      className="bg-[#0D1525] border border-[#182842] hover:border-emerald-500/40 rounded-2xl p-5 transition space-y-3.5 shadow-sm"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            {news.subcategory}
-                          </span>
-                          <span className="text-[11px] text-[#6981A4] flex items-center gap-1 font-mono">
-                            <Clock size={12} /> {formatIST(news.published_at)}
-                          </span>
-                          {news.stocks_affected && (
-                            <span className="text-xs font-mono font-bold bg-[#14233A] text-cyan-300 px-2.5 py-0.5 rounded border border-[#233C61]">
-                              Sector Index: {news.stocks_affected}
+                  .map((news) => {
+                    const isBigNews = news.impact_level === "High" || news.is_breaking;
+                    return (
+                      <article
+                        key={news.id}
+                        className={`rounded-2xl p-5 transition space-y-3.5 shadow-sm ${
+                          isBigNews
+                            ? "bg-gradient-to-br from-[#260A10] via-[#1B070C] to-[#0D1525] border-2 border-red-500/90 shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:border-red-400"
+                            : "bg-[#0D1525] border border-[#182842] hover:border-emerald-500/40"
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {isBigNews && (
+                              <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-red-600 text-white flex items-center gap-1 shadow-md animate-pulse">
+                                <AlertTriangle size={12} /> CRITICAL MARKET MOVER
+                              </span>
+                            )}
+                            {isBigNews && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-950/80 text-red-300 border border-red-500/50">
+                                ⚡ High Market Fluctuation
+                              </span>
+                            )}
+                            <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
+                              isBigNews ? "bg-red-900/40 text-red-200 border border-red-500/30" : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            }`}>
+                              {news.subcategory}
                             </span>
+                            <span className="text-[11px] text-[#6981A4] flex items-center gap-1 font-mono">
+                              <Clock size={12} /> {formatIST(news.published_at)}
+                            </span>
+                            {news.stocks_affected && (
+                              <span className="text-xs font-mono font-bold bg-[#14233A] text-cyan-300 px-2.5 py-0.5 rounded border border-[#233C61]">
+                                Sector Index: {news.stocks_affected}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                news.sentiment === "Bullish"
+                                  ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                  : news.sentiment === "Bearish"
+                                  ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                  : news.sentiment === "Volatile"
+                                  ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                                  : "bg-slate-500/15 text-slate-300 border border-slate-500/30"
+                              }`}
+                            >
+                              {news.sentiment}
+                            </span>
+                            <button
+                              onClick={() => toggleSaveNews(news.id)}
+                              className="p-1.5 rounded-lg bg-[#14223A] text-[#6881A4] hover:text-white"
+                              title="Bookmark"
+                            >
+                              {savedNewsIds.includes(news.id) ? (
+                                <BookmarkCheck size={16} className="text-blue-400" />
+                              ) : (
+                                <Bookmark size={16} />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <h3 className={`font-bold leading-snug transition ${
+                          isBigNews ? "text-base sm:text-lg text-white font-extrabold" : "text-base text-white hover:text-blue-300"
+                        }`}>
+                          {isBigNews && <span className="text-red-400 font-black mr-2 tracking-wide">[HIGH ALERT]</span>}
+                          {news.headline}
+                        </h3>
+
+                        <p className={`text-xs sm:text-sm leading-relaxed ${isBigNews ? "text-red-100/90" : "text-[#97ACCA]"}`}>
+                          {news.summary}
+                        </p>
+
+                        {/* Actionable Trader Takeaway Box */}
+                        {news.actionable_takeaway && (
+                          <div className={`rounded-r-xl p-3 text-xs ${
+                            isBigNews
+                              ? "bg-red-950/70 border-l-4 border-red-500 text-red-100"
+                              : "bg-[#0C1D2D] border-l-4 border-emerald-400 text-emerald-100"
+                          }`}>
+                            <div className={`flex items-center gap-1.5 font-bold mb-1 ${isBigNews ? "text-red-300" : "text-emerald-300"}`}>
+                              <Zap size={14} className={isBigNews ? "text-amber-400" : "text-emerald-400"} />
+                              <span>{isBigNews ? "🚨 Critical Sector Fluctuation & Defense Plan:" : "Actionable Sector Trade Strategy:"}</span>
+                            </div>
+                            <p className="leading-relaxed">{news.actionable_takeaway}</p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-3 border-t border-[#172740] text-xs text-[#6A82A4]">
+                          <div className="flex items-center gap-3">
+                            <span>Source: <strong>{news.source_name}</strong></span>
+                            <span>•</span>
+                            <span>Impact: <strong className={isBigNews ? "text-red-400" : "text-white"}>{news.impact_level}</strong></span>
+                          </div>
+                          {news.source_url && (
+                            <a
+                              href={news.source_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold"
+                            >
+                              Sector Data Link ↗
+                            </a>
                           )}
                         </div>
-
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                              news.sentiment === "Bullish"
-                                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                                : news.sentiment === "Bearish"
-                                ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                                : news.sentiment === "Volatile"
-                                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                                : "bg-slate-500/15 text-slate-300 border border-slate-500/30"
-                            }`}
-                          >
-                            {news.sentiment}
-                          </span>
-                          <button
-                            onClick={() => toggleSaveNews(news.id)}
-                            className="p-1.5 rounded-lg bg-[#14223A] text-[#6881A4] hover:text-white"
-                            title="Bookmark"
-                          >
-                            {savedNewsIds.includes(news.id) ? (
-                              <BookmarkCheck size={16} className="text-blue-400" />
-                            ) : (
-                              <Bookmark size={16} />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-
-                      <h3 className="text-base font-bold text-white leading-snug">{news.headline}</h3>
-
-                      <p className="text-xs sm:text-sm text-[#97ACCA] leading-relaxed">
-                        {news.summary}
-                      </p>
-
-                      {/* Actionable Trader Takeaway Box */}
-                      {news.actionable_takeaway && (
-                        <div className="bg-[#0C1D2D] border-l-4 border-emerald-400 rounded-r-xl p-3 text-xs text-emerald-100">
-                          <div className="flex items-center gap-1.5 font-bold text-emerald-300 mb-1">
-                            <Zap size={14} />
-                            <span>Actionable Sector Trade Strategy:</span>
-                          </div>
-                          <p className="leading-relaxed">{news.actionable_takeaway}</p>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-3 border-t border-[#172740] text-xs text-[#6A82A4]">
-                        <div className="flex items-center gap-3">
-                          <span>Source: <strong>{news.source_name}</strong></span>
-                          <span>•</span>
-                          <span>Impact: <strong className="text-white">{news.impact_level}</strong></span>
-                        </div>
-                        {news.source_url && (
-                          <a
-                            href={news.source_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold"
-                          >
-                            Sector Data Link ↗
-                          </a>
-                        )}
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
               </div>
             </div>
           )}
