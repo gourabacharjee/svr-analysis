@@ -1309,32 +1309,23 @@ export default function SVRAnalysisHome() {
               )}
             </button>
 
-            {/* Dark Mode Switch (Enable / Off) */}
+            {/* Single "Sunny" Theme Toggle Button */}
             <button
               type="button"
               onClick={toggleTheme}
-              title={isDarkMode ? "Dark Mode: Enable (Click to switch to White Background)" : "Dark Mode: Off (Click to switch to Black Background)"}
-              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border transition-all duration-200 cursor-pointer select-none shrink-0 ${
+              title={isDarkMode ? "Switch to Sunny Mode (White Background)" : "Switch to Dark Mode (Black Background)"}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all duration-200 cursor-pointer select-none shrink-0 shadow-sm active:scale-95 ${
                 isDarkMode
-                  ? "bg-[#142036] hover:bg-[#1A2B49] border-[#1E3050] text-[#9CB1D1]"
-                  : "bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800 shadow-sm"
+                  ? "bg-[#142036] hover:bg-[#1E2E4A] border-amber-500/40 text-amber-300 hover:border-amber-400 hover:shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                  : "bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 shadow-sm"
               }`}
             >
-              <div className="flex items-center gap-1 text-[11px] sm:text-xs font-bold">
-                {isDarkMode ? <Moon size={14} className="text-amber-400" /> : <Sun size={14} className="text-amber-500" />}
-                <span className="text-[11px] sm:text-xs font-bold">Dark Mode</span>
-              </div>
-              <div
-                className={`w-8 h-4.5 sm:w-9 sm:h-5 flex items-center rounded-full p-0.5 transition-colors duration-300 ${
-                  isDarkMode ? "bg-emerald-600 justify-end" : "bg-slate-300 justify-start"
-                }`}
-              >
-                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white shadow-md block"></span>
-              </div>
-              <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-wider ${
-                isDarkMode ? "text-emerald-400" : "text-slate-600"
-              }`}>
-                {isDarkMode ? "Enable" : "Off"}
+              <Sun
+                size={16}
+                className="text-amber-500 transition-transform duration-500 hover:rotate-90 shrink-0"
+              />
+              <span className="text-xs font-black tracking-wide">
+                Sunny
               </span>
             </button>
 
@@ -1518,29 +1509,21 @@ export default function SVRAnalysisHome() {
               </span>
             </div>
 
-            {/* Mobile Dark Mode Toggle */}
-            <div className="px-3 py-2.5 mb-2 rounded-xl bg-[#101C30] border border-[#1A2E4E] flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold">
-                {isDarkMode ? <Moon size={15} className="text-amber-400" /> : <Sun size={15} className="text-amber-500" />}
-                <span className="text-xs font-bold">Dark Mode</span>
-              </div>
+            {/* Mobile Single "Sunny" Theme Toggle Button */}
+            <div className="px-3 py-2 mb-2 rounded-xl bg-[#101C30] border border-[#1A2E4E] flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-300">Theme</span>
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="flex items-center gap-2 select-none"
+                title={isDarkMode ? "Switch to Sunny Mode" : "Switch to Dark Mode"}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all shadow-sm ${
+                  isDarkMode
+                    ? "bg-[#142036] border-amber-500/40 text-amber-300"
+                    : "bg-amber-50 border-amber-300 text-amber-900"
+                }`}
               >
-                <div
-                  className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors duration-300 ${
-                    isDarkMode ? "bg-emerald-600 justify-end" : "bg-slate-300 justify-start"
-                  }`}
-                >
-                  <span className="w-4 h-4 rounded-full bg-white shadow-md block"></span>
-                </div>
-                <span className={`text-[10px] font-black uppercase tracking-wider ${
-                  isDarkMode ? "text-emerald-400" : "text-slate-600"
-                }`}>
-                  {isDarkMode ? "Enable" : "Off"}
-                </span>
+                <Sun size={15} className="text-amber-500 shrink-0" />
+                <span className="text-xs font-black">Sunny</span>
               </button>
             </div>
 

@@ -11,14 +11,14 @@
   --border-subtle: #e2e8f0;
   --border-active: #cbd5e1;
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #334155;
   --text-muted: #64748b;
-  --accent-blue: #2563eb;
-  --accent-cyan: #0891b2;
-  --accent-green: #059669;
+  --accent-blue: #1d4ed8;
+  --accent-cyan: #0284c7;
+  --accent-green: #047857;
   --accent-red: #dc2626;
-  --accent-amber: #d97706;
-  --accent-purple: #7c3aed;
+  --accent-amber: #b45309;
+  --accent-purple: #6d28d9;
 }
 
 * {
@@ -102,7 +102,7 @@ body {
   left: -100%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
   transition: 0.5s;
 }
 
@@ -111,14 +111,20 @@ body {
 }
 
 /* ==========================================================================
-   THEME STYLING: WHITE (LIGHT) DEFAULT & BLACK (DARK) SWITCH
+   THEME STYLING: SUNNY WHITE DEFAULT & DARK THEME TOGGLE
    ========================================================================== */
 
-/* 1. LIGHT THEME (DEFAULT: WHITE BACKGROUND ALL ACROSS WEBSITE) */
+/* 1. SUNNY (WHITE) THEME: PROFESSIONAL FINANCIAL TRADING DESK DESIGN */
 body.theme-light,
 .theme-light {
   color-scheme: light;
   background-color: #F8FAFC !important;
+  /* Professional micro-dot financial grid texture */
+  background-image: 
+    radial-gradient(rgba(100, 116, 139, 0.16) 1.2px, transparent 1.2px),
+    linear-gradient(to bottom, #FFFFFF 0%, #F8FAFC 260px, #F1F5F9 100%) !important;
+  background-size: 22px 22px, 100% 100% !important;
+  background-attachment: fixed !important;
   color: #0F172A !important;
 }
 
@@ -132,26 +138,69 @@ body.theme-light,
   background: #94A3B8;
 }
 
-/* Background overrides for Light Mode */
+/* Base Headings & Paragraphs High-Contrast Defaults */
+.theme-light h1,
+.theme-light h2,
+.theme-light h3,
+.theme-light h4,
+.theme-light h5,
+.theme-light h6 {
+  color: #0F172A !important;
+  font-weight: 800 !important;
+}
+
+.theme-light p {
+  color: #1E293B;
+}
+
+/* Background Overrides for Sunny White Mode */
 .theme-light [class*="bg-[#070B12]"],
 .theme-light [class*="bg-[#080D17]"],
 .theme-light [class*="bg-[#080D18]"] {
   background-color: #F8FAFC !important;
+  background-image: 
+    radial-gradient(rgba(100, 116, 139, 0.16) 1.2px, transparent 1.2px),
+    linear-gradient(to bottom, #FFFFFF 0%, #F8FAFC 260px, #F1F5F9 100%) !important;
+  background-size: 22px 22px, 100% 100% !important;
+  background-attachment: fixed !important;
+}
+
+.theme-light header {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(14px) !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05) !important;
+}
+
+.theme-light aside {
+  background-color: #FFFFFF !important;
+  border-right: 1px solid #E2E8F0 !important;
+  box-shadow: 1px 0 4px 0 rgba(15, 23, 42, 0.03) !important;
 }
 
 .theme-light [class*="bg-[#0A101C]"],
 .theme-light [class*="bg-[#0A101D]"],
 .theme-light [class*="bg-[#0B1220]"],
 .theme-light [class*="bg-[#0B1424]"],
-.theme-light [class*="bg-[#0B1527]"],
-.theme-light [class*="bg-[#0D1525]"] {
+.theme-light [class*="bg-[#0B1527]"] {
   background-color: #FFFFFF !important;
 }
 
+/* Elevated White Cards with Soft Shadow and Border */
+.theme-light article,
 .theme-light [class*="bg-[#0D1525]"] {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.04) !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 4px 8px -2px rgba(15, 23, 42, 0.04) !important;
 }
 
+.theme-light article:hover,
+.theme-light [class*="bg-[#0D1525]"]:hover {
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 4px 14px 0 rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Secondary Panels, Sub-cards, & Filter bars */
 .theme-light [class*="bg-[#101D33]"],
 .theme-light [class*="bg-[#101C30]"],
 .theme-light [class*="bg-[#111A2D]"],
@@ -165,7 +214,8 @@ body.theme-light,
 .theme-light [class*="bg-[#14233A]"],
 .theme-light [class*="bg-[#14233C]"],
 .theme-light [class*="bg-[#15233A]"] {
-  background-color: #F1F5F9 !important;
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
 }
 
 .theme-light [class*="bg-[#162740]"],
@@ -174,10 +224,10 @@ body.theme-light,
 .theme-light [class*="bg-[#1A2E4E]"],
 .theme-light [class*="bg-[#1C2E4C]"],
 .theme-light [class*="bg-[#1F365C]"] {
-  background-color: #E2E8F0 !important;
+  background-color: #F1F5F9 !important;
 }
 
-/* Tinted Card Backgrounds in Light Mode */
+/* Tinted Financial Badges and Radar Sections in Sunny Mode */
 .theme-light [class*="bg-[#0C1D2D]"] {
   background-color: #EFF6FF !important;
 }
@@ -191,16 +241,39 @@ body.theme-light,
   background-color: #FFF1F2 !important;
 }
 
-/* All Dark Navy Borders converted to crisp slate borders */
+/* All Borders in Sunny Mode */
 .theme-light [class*="border-[#1"],
 .theme-light [class*="border-[#2"] {
   border-color: #E2E8F0 !important;
 }
 
-/* Text overrides for Light Mode */
+/* ==========================================================================
+   FONT VISIBILITY AND HIGH-CONTRAST TYPOGRAPHY IN SUNNY MODE
+   ========================================================================== */
+
+/* 1. All White Text converted to Deep Dark Slate Black */
 .theme-light .text-white,
 .theme-light [class*="text-[#F0F4FC]"] {
   color: #0F172A !important;
+}
+
+/* 2. All Faded / Pale Grays converted to Crisp, Highly Visible Slate */
+.theme-light .text-slate-200,
+.theme-light .text-slate-300 {
+  color: #0F172A !important;
+  font-weight: 700 !important;
+}
+
+.theme-light .text-slate-400,
+.theme-light .text-gray-300,
+.theme-light .text-gray-400 {
+  color: #1E293B !important;
+  font-weight: 600 !important;
+}
+
+.theme-light .text-slate-500,
+.theme-light .text-gray-500 {
+  color: #334155 !important;
 }
 
 .theme-light [class*="text-[#5"],
@@ -210,34 +283,109 @@ body.theme-light,
 .theme-light [class*="text-[#9"],
 .theme-light [class*="text-[#B"],
 .theme-light [class*="text-[#C"] {
-  color: #475569 !important;
+  color: #1E293B !important;
 }
 
-/* Exceptions: Preserve accent highlights in Light Mode */
+/* 3. High-Contrast Deep Accent Colors on White Backgrounds */
+/* Rich Emerald (Green) */
+.theme-light .text-emerald-300,
+.theme-light .text-emerald-400 {
+  color: #047857 !important;
+  font-weight: 700 !important;
+}
+
+/* Rich Crimson (Red / Bearish / Loss) */
+.theme-light .text-rose-300,
+.theme-light .text-rose-400 {
+  color: #DC2626 !important;
+  font-weight: 700 !important;
+}
+
+/* Rich Amber (Yellow / Volatile / Neutral) */
+.theme-light .text-amber-300,
+.theme-light .text-amber-400 {
+  color: #B45309 !important;
+  font-weight: 700 !important;
+}
+
+/* Rich Ocean Cyan */
+.theme-light .text-cyan-300,
+.theme-light .text-cyan-400 {
+  color: #0369A1 !important;
+  font-weight: 700 !important;
+}
+
+/* Rich Royal Blue */
+.theme-light .text-blue-300,
+.theme-light .text-blue-400,
 .theme-light .text-[#60A5FA] {
-  color: #2563EB !important;
+  color: #1D4ED8 !important;
+  font-weight: 700 !important;
 }
 
-/* Inputs & Placeholder in Light Mode */
+/* Rich Sky Blue */
+.theme-light .text-sky-300,
+.theme-light .text-sky-400 {
+  color: #0284C7 !important;
+  font-weight: 700 !important;
+}
+
+/* Rich Violet */
+.theme-light .text-purple-300,
+.theme-light .text-purple-400 {
+  color: #6D28D9 !important;
+  font-weight: 700 !important;
+}
+
+/* Badges with Low-Opacity Dark Backgrounds converted to Crisp Light Badges */
+.theme-light [class*="bg-emerald-950"],
+.theme-light [class*="bg-emerald-900"] {
+  background-color: #ECFDF5 !important;
+  border-color: #A7F3D0 !important;
+}
+.theme-light [class*="bg-blue-950"],
+.theme-light [class*="bg-blue-900"] {
+  background-color: #EFF6FF !important;
+  border-color: #BFDBFE !important;
+}
+.theme-light [class*="bg-rose-950"],
+.theme-light [class*="bg-rose-900"] {
+  background-color: #FFF1F2 !important;
+  border-color: #FECDD3 !important;
+}
+.theme-light [class*="bg-amber-950"],
+.theme-light [class*="bg-amber-900"] {
+  background-color: #FFFBEB !important;
+  border-color: #FDE68A !important;
+}
+
+/* Top Marquee Separator & Details */
+.theme-light [class*="text-[#20324E]"] {
+  color: #CBD5E1 !important;
+}
+
+/* Inputs & Placeholder in Sunny Mode */
 .theme-light input {
   color: #0F172A !important;
   background-color: #FFFFFF !important;
   border-color: #CBD5E1 !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
 .theme-light input::placeholder {
-  color: #94A3B8 !important;
+  color: #64748B !important;
+  font-weight: 500 !important;
 }
 
-/* Red Alert Catalyst Banner & Cards in Light Mode */
+/* Red Alert Catalyst Banner & Cards in Sunny Mode */
 .theme-light .bg-gradient-to-r.from-red-950 {
   background: linear-gradient(to right, #FFF5F5, #FEE2E2, #FFFFFF) !important;
-  border-color: #EF4444 !important;
-  box-shadow: 0 4px 15px -1px rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid #F87171 !important;
+  box-shadow: 0 4px 16px -1px rgba(239, 68, 68, 0.15) !important;
 }
 .theme-light .bg-gradient-to-br.from-\[\#260A10\] {
   background: linear-gradient(135deg, #FFF5F5, #FFFFFF) !important;
-  border-color: #EF4444 !important;
-  box-shadow: 0 4px 12px -1px rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid #F87171 !important;
+  box-shadow: 0 4px 14px -1px rgba(239, 68, 68, 0.12) !important;
 }
 .theme-light .bg-red-950\/70,
 .theme-light .bg-red-950\/80,
@@ -252,7 +400,7 @@ body.theme-light,
   color: #991B1B !important;
 }
 
-/* Gradients for Info Headers in Light Mode */
+/* Gradients for Info Headers in Sunny Mode */
 .theme-light .bg-gradient-to-r.from-blue-950\/40 {
   background: linear-gradient(to right, #EFF6FF, #FFFFFF) !important;
   border-color: #BFDBFE !important;
@@ -266,22 +414,28 @@ body.theme-light,
   border-color: #FECDD3 !important;
 }
 
-/* Buttons in Light Mode */
+/* Sidebar Navigation Items in Sunny Mode */
+.theme-light aside button {
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+.theme-light aside button:hover {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+/* Generic Button borders in Sunny Mode */
 .theme-light button {
   border-color: #E2E8F0;
 }
 
-/* Top Marquee Separator in Light Mode */
-.theme-light [class*="text-[#20324E]"] {
-  color: #CBD5E1 !important;
-}
 
-
-/* 2. DARK THEME (BLACK BACKGROUND TRADING TERMINAL) */
+/* 2. DARK THEME (BLACK TRADING TERMINAL) */
 body.theme-dark,
 .theme-dark {
   color-scheme: dark;
   background-color: #070B12 !important;
+  background-image: none !important;
   color: #F0F4FC !important;
 }
 
