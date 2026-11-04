@@ -3,22 +3,22 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
-  --bg-main: #070b12;
-  --bg-card: #0d1424;
-  --bg-card-hover: #121c32;
-  --bg-subtle: #152238;
-  --border-subtle: #1b2a44;
-  --border-active: #2f456c;
-  --text-primary: #f0f4fc;
-  --text-secondary: #9cb1d1;
-  --text-muted: #627798;
-  --accent-blue: #3b82f6;
-  --accent-cyan: #06b6d4;
-  --accent-green: #10b981;
-  --accent-red: #ef4444;
-  --accent-amber: #f59e0b;
-  --accent-purple: #8b5cf6;
+  color-scheme: light;
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-subtle: #f8fafc;
+  --border-subtle: #e2e8f0;
+  --border-active: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --accent-blue: #2563eb;
+  --accent-cyan: #0891b2;
+  --accent-green: #059669;
+  --accent-red: #dc2626;
+  --accent-amber: #d97706;
+  --accent-purple: #7c3aed;
 }
 
 * {
@@ -27,8 +27,8 @@
 
 body {
   margin: 0;
-  background-color: var(--bg-main);
-  color: var(--text-primary);
+  background-color: #f8fafc;
+  color: #0f172a;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -44,14 +44,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #080d17;
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e2e47;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2d456b;
+  background: #94a3b8;
 }
 
 /* Animations */
@@ -85,7 +85,7 @@ body {
 }
 
 .brand-text-gradient {
-  background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 50%, #34d399 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #0d9488 50%, #059669 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -108,4 +108,189 @@ body {
 
 .card-shine:hover::after {
   left: 100%;
+}
+
+/* ==========================================================================
+   THEME STYLING: WHITE (LIGHT) DEFAULT & BLACK (DARK) SWITCH
+   ========================================================================== */
+
+/* 1. LIGHT THEME (DEFAULT: WHITE BACKGROUND ALL ACROSS WEBSITE) */
+body.theme-light,
+.theme-light {
+  color-scheme: light;
+  background-color: #F8FAFC !important;
+  color: #0F172A !important;
+}
+
+.theme-light ::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+.theme-light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+.theme-light ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Background overrides for Light Mode */
+.theme-light [class*="bg-[#070B12]"],
+.theme-light [class*="bg-[#080D17]"],
+.theme-light [class*="bg-[#080D18]"] {
+  background-color: #F8FAFC !important;
+}
+
+.theme-light [class*="bg-[#0A101C]"],
+.theme-light [class*="bg-[#0A101D]"],
+.theme-light [class*="bg-[#0B1220]"],
+.theme-light [class*="bg-[#0B1424]"],
+.theme-light [class*="bg-[#0B1527]"],
+.theme-light [class*="bg-[#0D1525]"] {
+  background-color: #FFFFFF !important;
+}
+
+.theme-light [class*="bg-[#0D1525]"] {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.04) !important;
+}
+
+.theme-light [class*="bg-[#101D33]"],
+.theme-light [class*="bg-[#101C30]"],
+.theme-light [class*="bg-[#111A2D]"],
+.theme-light [class*="bg-[#121E33]"],
+.theme-light [class*="bg-[#121F36]"],
+.theme-light [class*="bg-[#122238]"],
+.theme-light [class*="bg-[#131F33]"],
+.theme-light [class*="bg-[#142036]"],
+.theme-light [class*="bg-[#142238]"],
+.theme-light [class*="bg-[#14223A]"],
+.theme-light [class*="bg-[#14233A]"],
+.theme-light [class*="bg-[#14233C]"],
+.theme-light [class*="bg-[#15233A]"] {
+  background-color: #F1F5F9 !important;
+}
+
+.theme-light [class*="bg-[#162740]"],
+.theme-light [class*="bg-[#162744]"],
+.theme-light [class*="bg-[#1A2B49]"],
+.theme-light [class*="bg-[#1A2E4E]"],
+.theme-light [class*="bg-[#1C2E4C]"],
+.theme-light [class*="bg-[#1F365C]"] {
+  background-color: #E2E8F0 !important;
+}
+
+/* Tinted Card Backgrounds in Light Mode */
+.theme-light [class*="bg-[#0C1D2D]"] {
+  background-color: #EFF6FF !important;
+}
+.theme-light [class*="bg-[#0F1E25]"],
+.theme-light [class*="bg-[#101D22]"] {
+  background-color: #ECFDF5 !important;
+}
+.theme-light [class*="bg-[#16121C]"],
+.theme-light [class*="bg-[#18121E]"],
+.theme-light [class*="bg-[#181320]"] {
+  background-color: #FFF1F2 !important;
+}
+
+/* All Dark Navy Borders converted to crisp slate borders */
+.theme-light [class*="border-[#1"],
+.theme-light [class*="border-[#2"] {
+  border-color: #E2E8F0 !important;
+}
+
+/* Text overrides for Light Mode */
+.theme-light .text-white,
+.theme-light [class*="text-[#F0F4FC]"] {
+  color: #0F172A !important;
+}
+
+.theme-light [class*="text-[#5"],
+.theme-light [class*="text-[#6"],
+.theme-light [class*="text-[#7"],
+.theme-light [class*="text-[#8"],
+.theme-light [class*="text-[#9"],
+.theme-light [class*="text-[#B"],
+.theme-light [class*="text-[#C"] {
+  color: #475569 !important;
+}
+
+/* Exceptions: Preserve accent highlights in Light Mode */
+.theme-light .text-[#60A5FA] {
+  color: #2563EB !important;
+}
+
+/* Inputs & Placeholder in Light Mode */
+.theme-light input {
+  color: #0F172A !important;
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+}
+.theme-light input::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Red Alert Catalyst Banner & Cards in Light Mode */
+.theme-light .bg-gradient-to-r.from-red-950 {
+  background: linear-gradient(to right, #FFF5F5, #FEE2E2, #FFFFFF) !important;
+  border-color: #EF4444 !important;
+  box-shadow: 0 4px 15px -1px rgba(239, 68, 68, 0.15) !important;
+}
+.theme-light .bg-gradient-to-br.from-\[\#260A10\] {
+  background: linear-gradient(135deg, #FFF5F5, #FFFFFF) !important;
+  border-color: #EF4444 !important;
+  box-shadow: 0 4px 12px -1px rgba(239, 68, 68, 0.12) !important;
+}
+.theme-light .bg-red-950\/70,
+.theme-light .bg-red-950\/80,
+.theme-light .bg-red-950\/90 {
+  background-color: #FEE2E2 !important;
+}
+.theme-light .text-red-100,
+.theme-light .text-red-200 {
+  color: #7F1D1D !important;
+}
+.theme-light .text-red-300 {
+  color: #991B1B !important;
+}
+
+/* Gradients for Info Headers in Light Mode */
+.theme-light .bg-gradient-to-r.from-blue-950\/40 {
+  background: linear-gradient(to right, #EFF6FF, #FFFFFF) !important;
+  border-color: #BFDBFE !important;
+}
+.theme-light .bg-gradient-to-r.from-emerald-950\/40 {
+  background: linear-gradient(to right, #ECFDF5, #FFFFFF) !important;
+  border-color: #A7F3D0 !important;
+}
+.theme-light .bg-gradient-to-r.from-rose-950\/40 {
+  background: linear-gradient(to right, #FFF1F2, #FFFFFF) !important;
+  border-color: #FECDD3 !important;
+}
+
+/* Buttons in Light Mode */
+.theme-light button {
+  border-color: #E2E8F0;
+}
+
+/* Top Marquee Separator in Light Mode */
+.theme-light [class*="text-[#20324E]"] {
+  color: #CBD5E1 !important;
+}
+
+
+/* 2. DARK THEME (BLACK BACKGROUND TRADING TERMINAL) */
+body.theme-dark,
+.theme-dark {
+  color-scheme: dark;
+  background-color: #070B12 !important;
+  color: #F0F4FC !important;
+}
+
+.theme-dark ::-webkit-scrollbar-track {
+  background: #080D17;
+}
+.theme-dark ::-webkit-scrollbar-thumb {
+  background: #1E2E47;
+}
+.theme-dark ::-webkit-scrollbar-thumb:hover {
+  background: #2D456B;
 }
