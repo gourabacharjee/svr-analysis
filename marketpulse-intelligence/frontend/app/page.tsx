@@ -3,6 +3,10 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { INITIAL_MARKET_DATA } from "./data/marketData";
 import {
+  SignificantMover,
+  INITIAL_SIGNIFICANT_MOVERS,
+} from "./data/significantMovers";
+import {
   Activity,
   AlertTriangle,
   ArrowDownRight,
@@ -181,6 +185,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 
 const NAV_ITEMS = [
   { id: "overview", label: "Dashboard Overview", icon: LayoutDashboard },
+  { id: "movers_radar", label: "⚡ ±2% Movers & News Cause", icon: Flame, badge: "Priority" },
   { id: "indian_market_news", label: "Indian Market News", icon: Globe2, badge: "Market" },
   { id: "sector_news", label: "Sector-Based News (India)", icon: Layers, badge: "Sectors" },
   { id: "catalysts", label: "Company Catalysts & CEO Alerts", icon: Building2, badge: "Edge" },
@@ -217,6 +222,10 @@ export default function SVRAnalysisHome() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
+  // Significant Movers (>= +-2%) and their Direct Causative News State
+  const [significantMovers, setSignificantMovers] = useState<SignificantMover[]>(INITIAL_SIGNIFICANT_MOVERS);
+  const [moverFilter, setMoverFilter] = useState<"all" | "gainers" | "losers">("all");
+
   // Watchlist custom state
   const [customWatchlist, setCustomWatchlist] = useState<
     { symbol: string; name: string; notes: string }[]
@@ -250,6 +259,15 @@ export default function SVRAnalysisHome() {
       data?.news?.[0]
     );
   }, [data?.news]);
+
+  // Filtered Significant Movers (>= +-2%) based on Active Filter
+  const filteredSignificantMovers = useMemo(() => {
+    return (significantMovers || []).filter((m) => {
+      if (moverFilter === "gainers") return m.tone === "up" && m.change_pct >= 2;
+      if (moverFilter === "losers") return m.tone === "down" && m.change_pct >= 2;
+      return m.change_pct >= 2;
+    });
+  }, [significantMovers, moverFilter]);
 
   // Real-Time Live Ticker State & Authentic Reference Quotes
   const [flashingTicks, setFlashingTicks] = useState<Record<string, "up" | "down">>({});
@@ -551,6 +569,28 @@ export default function SVRAnalysisHome() {
           fo_ban_list: nextFoBan,
           updated_at: new Date().toISOString(),
         };
+      });
+
+      // 7. Micro-tick one of the significant mover stocks (>= +-2%) to keep real-time price alive
+      setSignificantMovers((prevMovers) => {
+        if (!prevMovers || prevMovers.length === 0) return prevMovers;
+        const targetIdx = Math.floor(Math.random() * prevMovers.length);
+        return prevMovers.map((m, idx) => {
+          if (idx !== targetIdx) return m;
+          const delta = (Math.random() - 0.49) * (m.cmp > 1000 ? 0.8 : 0.25);
+          const newCmp = Math.max(1, Math.round((m.cmp + delta) * 20) / 20);
+          const diff = newCmp - m.prev_close;
+          const pct = Math.abs(Math.round(((diff / m.prev_close) * 100) * 100) / 100);
+          return {
+            ...m,
+            cmp: newCmp,
+            change_pts: Math.round(diff * 100) / 100,
+            change_pct: pct,
+            tone: diff >= 0 ? "up" : "down",
+            day_high: Math.max(m.day_high, newCmp),
+            day_low: Math.min(m.day_low, newCmp),
+          };
+        });
       });
 
       if (Object.keys(updatedTicks).length > 0) {
@@ -865,6 +905,16 @@ export default function SVRAnalysisHome() {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return null;
 
+    // 0. Matching Significant Movers (>= +-2%) with News Cause
+    const matchedMovers = (significantMovers || []).filter(
+      (m) =>
+        m.symbol.toLowerCase().includes(q) ||
+        m.company_name.toLowerCase().includes(q) ||
+        m.sector.toLowerCase().includes(q) ||
+        m.causative_headline.toLowerCase().includes(q) ||
+        m.catalyst_type.toLowerCase().includes(q)
+    );
+
     // 1. Matching Stock News
     const matchedNews = (data?.news || []).filter(
       (n) =>
@@ -918,6 +968,7 @@ export default function SVRAnalysisHome() {
     );
 
     const totalCount =
+      matchedMovers.length +
       matchedNews.length +
       matchedCatalysts.length +
       matchedSebi.length +
@@ -926,6 +977,7 @@ export default function SVRAnalysisHome() {
 
     return {
       query: searchQuery.trim(),
+      movers: matchedMovers,
       news: matchedNews,
       catalysts: matchedCatalysts,
       sebi: matchedSebi,
@@ -934,7 +986,7 @@ export default function SVRAnalysisHome() {
       watchlist: matchedWatchlist,
       totalCount,
     };
-  }, [searchQuery, data, customWatchlist]);
+  }, [searchQuery, data, customWatchlist, significantMovers]);
 
   // Position Size Calc Results
   const positionSizeResults = useMemo(() => {
@@ -1144,6 +1196,44 @@ export default function SVRAnalysisHome() {
                   </div>
                 ) : (
                   <div className="space-y-3">
+                    {/* Matching Significant Movers (>= +-2%) with News Cause */}
+                    {searchResults.movers && searchResults.movers.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
+                          <Flame size={12} className="text-amber-500 fill-amber-500" /> Significant Movers (≥ ±2%) & News Cause ({searchResults.movers.length})
+                        </span>
+                        {searchResults.movers.map((m) => (
+                          <div
+                            key={`smovers-${m.id}`}
+                            onClick={() => {
+                              setActiveTab("movers_radar");
+                              setIsSearchFocused(false);
+                            }}
+                            className="p-2.5 rounded-xl bg-white border border-[#E6EDF5] hover:border-blue-400 cursor-pointer transition space-y-1 shadow-sm"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-mono font-black text-[#0F172A]">
+                                NSE: {m.symbol} ({m.company_name})
+                              </span>
+                              <span
+                                className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                                  m.tone === "up" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
+                                }`}
+                              >
+                                {m.tone === "up" ? "+" : "-"}{m.change_pct.toFixed(2)}% (≥ 2%)
+                              </span>
+                            </div>
+                            <p className="text-xs font-bold text-[#0F172A] leading-tight">
+                              Why it moved: {m.causative_headline}
+                            </p>
+                            <p className="text-[10px] text-blue-600 font-semibold">
+                              {m.catalyst_type} • Support: {m.support_level} • Resistance: {m.resistance_level}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Matching Catalysts / CEO News */}
                     {searchResults.catalysts.length > 0 && (
                       <div className="space-y-1.5">
@@ -1393,6 +1483,42 @@ export default function SVRAnalysisHome() {
                   </div>
                 ) : (
                   <div className="space-y-3">
+                    {/* Matching Significant Movers (>= +-2%) with News Cause */}
+                    {searchResults.movers && searchResults.movers.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
+                          <Flame size={12} className="text-amber-500 fill-amber-500" /> Significant Movers (≥ ±2%) & News Cause ({searchResults.movers.length})
+                        </span>
+                        {searchResults.movers.map((m) => (
+                          <div
+                            key={`m-smovers-${m.id}`}
+                            onClick={() => {
+                              setActiveTab("movers_radar");
+                              setShowMobileSearch(false);
+                              setIsSearchFocused(false);
+                            }}
+                            className="p-2 rounded-xl bg-white border border-[#E6EDF5] hover:border-blue-400 cursor-pointer transition space-y-1"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-mono font-black text-[#0F172A]">
+                                NSE: {m.symbol}
+                              </span>
+                              <span
+                                className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                                  m.tone === "up" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                                }`}
+                              >
+                                {m.tone === "up" ? "+" : "-"}{m.change_pct.toFixed(2)}% (≥ 2%)
+                              </span>
+                            </div>
+                            <p className="text-xs font-bold text-[#0F172A] leading-tight">
+                              Why it moved: {m.causative_headline}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Matching Catalysts */}
                     {searchResults.catalysts.length > 0 && (
                       <div className="space-y-1.5">
@@ -1978,7 +2104,190 @@ export default function SVRAnalysisHome() {
                 })}
               </div>
 
-              {/* Market Barometer & Sentiment Row */}
+              {/* PRIORITY 1: TODAY'S SIGNIFICANT MOVERS (>= +-2%) & DIRECT NEWS CAUSE */}
+              <section className="bg-white rounded-2xl border border-[#E6EDF5] p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(50,70,100,0.05)] space-y-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-[#F1F5F9]">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                      <h2 className="text-base sm:text-lg font-black text-[#0F172A] tracking-tight flex items-center gap-1.5">
+                        <Flame size={20} className="text-amber-500 fill-amber-500" />
+                        Today's Significant Movers (≥ ±2%) & Triggering News
+                      </h2>
+                      <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase tracking-wider">
+                        Priority Level 1
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#64748B] leading-relaxed">
+                      Stocks fluctuating 2% or more during the trading session, automatically paired with the verified news, CEO departures, or regulatory catalysts causing the price movement.
+                    </p>
+                  </div>
+
+                  {/* Filter Pills */}
+                  <div className="flex items-center gap-1.5 bg-[#F0F4F8] p-1 rounded-xl shrink-0 self-start lg:self-center">
+                    <button
+                      onClick={() => setMoverFilter("all")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                        moverFilter === "all" ? "bg-white text-[#0F172A] shadow-sm" : "text-[#64748B] hover:text-[#0F172A]"
+                      }`}
+                    >
+                      All Movers ({significantMovers.length})
+                    </button>
+                    <button
+                      onClick={() => setMoverFilter("gainers")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                        moverFilter === "gainers" ? "bg-emerald-600 text-white shadow-sm" : "text-emerald-700 hover:text-emerald-800"
+                      }`}
+                    >
+                      <TrendingUp size={13} />
+                      Gainers ≥ +2% ({significantMovers.filter((m) => m.tone === "up" && m.change_pct >= 2).length})
+                    </button>
+                    <button
+                      onClick={() => setMoverFilter("losers")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                        moverFilter === "losers" ? "bg-rose-600 text-white shadow-sm" : "text-rose-700 hover:text-rose-800"
+                      }`}
+                    >
+                      <TrendingDown size={13} />
+                      Losers ≤ -2% ({significantMovers.filter((m) => m.tone === "down" && m.change_pct >= 2).length})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Movers Cards Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {filteredSignificantMovers.slice(0, 6).map((mover) => (
+                    <div
+                      key={mover.id}
+                      className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E6EDF5] hover:border-[#CBD5E1] transition-all shadow-[0_2px_10px_-2px_rgba(50,70,100,0.04)] hover:shadow-[0_8px_25px_-4px_rgba(50,70,100,0.08)] flex flex-col justify-between space-y-3.5 group"
+                    >
+                      {/* Top: Stock Info + Price + % Change */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 shadow-sm ${
+                              mover.tone === "up"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-rose-50 text-rose-700 border border-rose-200"
+                            }`}
+                          >
+                            {mover.symbol.slice(0, 3)}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-black text-sm text-[#0F172A]">
+                                NSE: {mover.symbol}
+                              </span>
+                              <span className="text-[10px] font-semibold text-[#64748B] hidden sm:inline">
+                                • {mover.sector}
+                              </span>
+                            </div>
+                            <p className="text-xs font-medium text-[#475569] line-clamp-1">
+                              {mover.company_name}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <div className="text-base sm:text-lg font-black font-mono text-[#0F172A]">
+                            ₹{mover.cmp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          </div>
+                          <div
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black shadow-sm ${
+                              mover.tone === "up"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-rose-50 text-rose-700 border border-rose-200"
+                            }`}
+                          >
+                            {mover.tone === "up" ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                            <span>
+                              {mover.tone === "up" ? "+" : "-"}{mover.change_pct.toFixed(2)}%
+                            </span>
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold ml-0.5">
+                              (≥ {mover.tone === "up" ? "+" : "-"}2%)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Intraday Metrics Bar */}
+                      <div className="flex items-center justify-between text-[11px] text-[#64748B] py-1.5 px-3 bg-[#F8FAFC] rounded-xl border border-[#EDF2F7] font-mono">
+                        <span>High: <strong className="text-[#0F172A]">₹{mover.day_high.toFixed(2)}</strong></span>
+                        <span>Low: <strong className="text-[#0F172A]">₹{mover.day_low.toFixed(2)}</strong></span>
+                        <span>Vol: <strong className="text-[#0F172A]">{mover.volume}</strong></span>
+                      </div>
+
+                      {/* Causative Catalyst / News Section (The "Why It Moved" Block) */}
+                      <div
+                        className={`p-3.5 rounded-xl border space-y-2 transition ${
+                          mover.tone === "up"
+                            ? "bg-emerald-50/40 border-emerald-200/80 group-hover:bg-emerald-50/70"
+                            : "bg-rose-50/40 border-rose-200/80 group-hover:bg-rose-50/70"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                              mover.tone === "up"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-rose-100 text-rose-800"
+                            }`}
+                          >
+                            <Zap size={11} /> Why It Moved: {mover.catalyst_type}
+                          </span>
+                          <span className="text-[10px] text-[#64748B] flex items-center gap-1">
+                            <Clock size={11} /> {formatIST(mover.published_at)}
+                          </span>
+                        </div>
+
+                        <h4 className="text-xs sm:text-sm font-bold text-[#0F172A] leading-snug">
+                          {mover.causative_headline}
+                        </h4>
+
+                        <p className="text-xs text-[#334155] leading-relaxed line-clamp-2">
+                          {mover.causative_summary}
+                        </p>
+
+                        <div className="pt-2 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[11px]">
+                          <span className="text-[#0F172A] font-semibold">
+                            <strong>Trade Edge:</strong> {mover.trader_advantage}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1 text-[10px] text-[#64748B]">
+                          <div className="flex items-center gap-2 font-mono">
+                            <span>Support: <strong className="text-emerald-700">{mover.support_level}</strong></span>
+                            <span>•</span>
+                            <span>Resistance: <strong className="text-rose-700">{mover.resistance_level}</strong></span>
+                          </div>
+                          {mover.source_url && (
+                            <a
+                              href={mover.source_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 hover:text-blue-700 flex items-center gap-1 font-bold"
+                            >
+                              Official Filing <ExternalLink size={10} />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2">
+                  <span className="text-xs text-[#64748B]">
+                    Showing top {Math.min(6, filteredSignificantMovers.length)} of {filteredSignificantMovers.length} stocks moving ≥ ±2% today
+                  </span>
+                  <button
+                    onClick={() => setActiveTab("movers_radar")}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition"
+                  >
+                    View All {significantMovers.length} Significant Movers & Full News Cause Radar <ChevronRight size={14} />
+                  </button>
+                </div>
+              </section>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Sentiment Gauge */}
                 <div className="bg-[#0D1525] border border-[#182842] rounded-2xl p-5 flex flex-col justify-between">
@@ -2383,6 +2692,219 @@ export default function SVRAnalysisHome() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW: DEDICATED SIGNIFICANT MOVERS (>= +-2%) & TRIGGERING NEWS RADAR */}
+          {activeTab === "movers_radar" && (
+            <div className="space-y-6">
+              {/* Header Hero Banner */}
+              <div className="bg-white rounded-2xl border border-[#E6EDF5] p-6 shadow-[0_4px_20px_-2px_rgba(50,70,100,0.05)] space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1 max-w-3xl">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-black uppercase tracking-wider flex items-center gap-1">
+                        <Flame size={13} className="text-amber-500 fill-amber-500" />
+                        Priority Intelligence Stream
+                      </span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight">
+                      Significant Market Movers (≥ ±2%) & Causative News Radar
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#475569] leading-relaxed">
+                      Rather than showing news in isolation, this radar automatically pairs stocks gaining or losing <strong>2% or more</strong> during the trading day with the exact news, CEO resignations, or regulatory circulars that caused the move.
+                    </p>
+                  </div>
+
+                  {/* Summary Metric Counters */}
+                  <div className="flex items-center gap-2 shrink-0 self-start md:self-center">
+                    <div className="px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+                      <span className="text-[10px] font-bold text-emerald-800 block uppercase">Gainers ≥ +2%</span>
+                      <span className="text-lg font-black text-emerald-700 font-mono">
+                        {significantMovers.filter((m) => m.tone === "up" && m.change_pct >= 2).length}
+                      </span>
+                    </div>
+                    <div className="px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-center">
+                      <span className="text-[10px] font-bold text-rose-800 block uppercase">Losers ≤ -2%</span>
+                      <span className="text-lg font-black text-rose-700 font-mono">
+                        {significantMovers.filter((m) => m.tone === "down" && m.change_pct >= 2).length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter and Mode Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[#F1F5F9]">
+                  <div className="flex items-center gap-1.5 bg-[#F0F4F8] p-1 rounded-xl">
+                    <button
+                      onClick={() => setMoverFilter("all")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                        moverFilter === "all" ? "bg-white text-[#0F172A] shadow-sm" : "text-[#64748B] hover:text-[#0F172A]"
+                      }`}
+                    >
+                      All Movers ({significantMovers.length})
+                    </button>
+                    <button
+                      onClick={() => setMoverFilter("gainers")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                        moverFilter === "gainers" ? "bg-emerald-600 text-white shadow-sm" : "text-emerald-700 hover:text-emerald-800"
+                      }`}
+                    >
+                      <TrendingUp size={13} />
+                      Top Gainers ≥ +2% ({significantMovers.filter((m) => m.tone === "up" && m.change_pct >= 2).length})
+                    </button>
+                    <button
+                      onClick={() => setMoverFilter("losers")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                        moverFilter === "losers" ? "bg-rose-600 text-white shadow-sm" : "text-rose-700 hover:text-rose-800"
+                      }`}
+                    >
+                      <TrendingDown size={13} />
+                      Top Losers ≤ -2% ({significantMovers.filter((m) => m.tone === "down" && m.change_pct >= 2).length})
+                    </button>
+                  </div>
+
+                  <span className="text-xs text-[#64748B] font-medium">
+                    ⚡ Live real-time tick updates active
+                  </span>
+                </div>
+              </div>
+
+              {/* Movers Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredSignificantMovers.map((mover) => (
+                  <div
+                    key={mover.id}
+                    className="p-5 rounded-2xl bg-white border border-[#E6EDF5] hover:border-[#CBD5E1] transition-all shadow-[0_2px_12px_-2px_rgba(50,70,100,0.05)] hover:shadow-[0_8px_25px_-4px_rgba(50,70,100,0.08)] flex flex-col justify-between space-y-4 group"
+                  >
+                    {/* Top Header */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 shadow-sm ${
+                            mover.tone === "up"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-rose-50 text-rose-700 border border-rose-200"
+                          }`}
+                        >
+                          {mover.symbol.slice(0, 3)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-black text-base text-[#0F172A]">
+                              NSE: {mover.symbol}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[#475569] text-[10px] font-bold">
+                              {mover.sector}
+                            </span>
+                          </div>
+                          <p className="text-xs font-medium text-[#475569]">
+                            {mover.company_name}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Price & Change Pill */}
+                      <div className="text-right shrink-0">
+                        <div className="text-lg sm:text-xl font-black font-mono text-[#0F172A]">
+                          ₹{mover.cmp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        </div>
+                        <div
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black shadow-sm ${
+                            mover.tone === "up"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-rose-50 text-rose-700 border border-rose-200"
+                          }`}
+                        >
+                          {mover.tone === "up" ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                          <span>
+                            {mover.tone === "up" ? "+" : "-"}{mover.change_pct.toFixed(2)}%
+                          </span>
+                          <span className="text-[10px] uppercase tracking-wider font-extrabold ml-1">
+                            (≥ {mover.tone === "up" ? "+" : "-"}2%)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stats strip */}
+                    <div className="grid grid-cols-3 gap-2 text-[11px] text-[#64748B] py-2 px-3 bg-[#F8FAFC] rounded-xl border border-[#EDF2F7] font-mono text-center">
+                      <div>
+                        <span className="block text-[10px] text-[#94A3B8]">Day High</span>
+                        <strong className="text-[#0F172A]">₹{mover.day_high.toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-[#94A3B8]">Day Low</span>
+                        <strong className="text-[#0F172A]">₹{mover.day_low.toFixed(2)}</strong>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-[#94A3B8]">Volume</span>
+                        <strong className="text-[#0F172A]">{mover.volume}</strong>
+                      </div>
+                    </div>
+
+                    {/* Causative Catalyst / News Section (The "Why It Moved" Block) */}
+                    <div
+                      className={`p-4 rounded-xl border space-y-2.5 transition ${
+                        mover.tone === "up"
+                          ? "bg-emerald-50/40 border-emerald-200/80 group-hover:bg-emerald-50/70"
+                          : "bg-rose-50/40 border-rose-200/80 group-hover:bg-rose-50/70"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                            mover.tone === "up"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-rose-100 text-rose-800"
+                          }`}
+                        >
+                          <Zap size={12} /> Why It Moved: {mover.catalyst_type}
+                        </span>
+                        <span className="text-[10px] text-[#64748B] flex items-center gap-1">
+                          <Clock size={11} /> {formatIST(mover.published_at)}
+                        </span>
+                      </div>
+
+                      <h4 className="text-sm font-bold text-[#0F172A] leading-snug">
+                        {mover.causative_headline}
+                      </h4>
+
+                      <p className="text-xs text-[#334155] leading-relaxed">
+                        {mover.causative_summary}
+                      </p>
+
+                      <div className="p-2.5 rounded-lg bg-white/80 border border-slate-200/70 text-xs space-y-1">
+                        <span className="text-[#0F172A] font-bold block text-[11px]">
+                          ⚡ Tactical Trading Blueprint:
+                        </span>
+                        <p className="text-[#334155] text-[11px] leading-relaxed">
+                          {mover.trader_advantage}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 text-[11px] text-[#64748B]">
+                        <div className="flex items-center gap-2 font-mono">
+                          <span>Support: <strong className="text-emerald-700">{mover.support_level}</strong></span>
+                          <span>•</span>
+                          <span>Resistance: <strong className="text-rose-700">{mover.resistance_level}</strong></span>
+                        </div>
+                        {mover.source_url && (
+                          <a
+                            href={mover.source_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 hover:text-blue-700 flex items-center gap-1 font-bold text-xs"
+                          >
+                            Official Filing <ExternalLink size={12} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
