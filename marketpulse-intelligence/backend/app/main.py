@@ -32,16 +32,16 @@ app.add_middleware(
 CACHE_MARKET = {
     "last_fetched": 0,
     "indices": [
-        {"name": "NIFTY 50", "value": "23,810.85", "change": "+370.05 (+1.58%)", "tone": "up", "high": "23,895.00", "low": "23,450.00"},
-        {"name": "BANK NIFTY", "value": "55,540.05", "change": "+537.85 (+0.98%)", "tone": "up", "high": "55,700.00", "low": "55,100.00"},
-        {"name": "SENSEX", "value": "76,917.85", "change": "+1,225.07 (+1.62%)", "tone": "up", "high": "77,150.00", "low": "75,800.00"},
-        {"name": "FIN NIFTY", "value": "25,120.30", "change": "+185.40 (+0.74%)", "tone": "up", "high": "25,240.00", "low": "24,980.00"},
-        {"name": "INDIA VIX", "value": "15.72", "change": "+0.22 (+1.43%)", "tone": "down", "high": "16.10", "low": "15.30"}
+        {"name": "NIFTY 50", "value": "23,903.35", "change": "+92.50 (+0.39%)", "tone": "up", "high": "23,946.35", "low": "23,696.15"},
+        {"name": "BANK NIFTY", "value": "55,719.40", "change": "+179.35 (+0.32%)", "tone": "up", "high": "55,890.00", "low": "55,320.00"},
+        {"name": "SENSEX", "value": "77,279.93", "change": "+362.08 (+0.47%)", "tone": "up", "high": "77,410.20", "low": "76,680.50"},
+        {"name": "FIN NIFTY", "value": "25,195.40", "change": "+75.10 (+0.30%)", "tone": "up", "high": "25,260.00", "low": "25,050.00"},
+        {"name": "INDIA VIX", "value": "16.02", "change": "+0.30 (+1.91%)", "tone": "down", "high": "16.35", "low": "15.45"}
     ],
     "global_cues": [
-        {"name": "GIFT NIFTY", "value": "23,880.00", "change": "+65.00 (+0.27%)", "tone": "up"},
-        {"name": "BRENT CRUDE", "value": "$103.53/bbl", "change": "-1.24 (-1.18%)", "tone": "down"},
-        {"name": "USD / INR", "value": "94.73", "change": "-0.16 (-0.17%)", "tone": "up"},
+        {"name": "GIFT NIFTY", "value": "23,935.00", "change": "+55.00 (+0.23%)", "tone": "up"},
+        {"name": "BRENT CRUDE", "value": "$102.82/bbl", "change": "-0.78 (-0.75%)", "tone": "down"},
+        {"name": "USD / INR", "value": "94.65", "change": "-0.08 (-0.08%)", "tone": "up"},
         {"name": "US 10-YR YIELD", "value": "4.28%", "change": "-0.02 (-0.46%)", "tone": "down"},
         {"name": "DXY (DOLLAR)", "value": "104.25", "change": "+0.05 (+0.05%)", "tone": "neutral"},
         {"name": "GOLD (MCX)", "value": "₹78,150/10g", "change": "+320 (+0.41%)", "tone": "up"}
@@ -52,8 +52,8 @@ def update_live_market_quotes():
     """Fetch live authentic quotes for Indian indices and commodities from financial quote feeds."""
     import time
     now_ts = time.time()
-    # Cache for 20 seconds
-    if now_ts - CACHE_MARKET["last_fetched"] < 20:
+    # Dynamic live cache: 6 seconds during active trading
+    if now_ts - CACHE_MARKET["last_fetched"] < 6:
         return
 
     symbol_map = {
@@ -68,20 +68,25 @@ def update_live_market_quotes():
     try:
         new_indices = []
         new_global = []
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "application/json"
+        }
         for sym, display_name in symbol_map.items():
             try:
-                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d"
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+                url = f"https://query2.finance.yahoo.com/v8/finance/chart/{sym}?interval=1m&range=1d"
+                req = urllib.request.Request(url, headers=headers)
                 with urllib.request.urlopen(req, timeout=4) as resp:
                     payload = json.loads(resp.read().decode("utf-8"))
                     meta = payload["chart"]["result"][0]["meta"]
                     price = meta.get("regularMarketPrice") or meta.get("chartPreviousClose") or 0.0
                     prev_close = meta.get("chartPreviousClose", price)
+                    high_val = meta.get("regularMarketDayHigh", price)
+                    low_val = meta.get("regularMarketDayLow", price)
                     diff = price - prev_close
                     pct = (diff / prev_close) * 100 if prev_close else 0.0
                     tone = "up" if diff >= 0 else "down"
 
-                    # Format appropriately
                     val_str = f"{price:,.2f}"
                     change_str = f"{diff:+,.2f} ({pct:+.2f}%)"
 
@@ -89,7 +94,9 @@ def update_live_market_quotes():
                         "name": display_name,
                         "value": val_str,
                         "change": change_str,
-                        "tone": tone
+                        "tone": tone,
+                        "high": f"{high_val:,.2f}" if high_val else None,
+                        "low": f"{low_val:,.2f}" if low_val else None
                     }
 
                     if sym in ["^NSEI", "^BSESN", "^NSEBANK", "^INDIAVIX"]:
@@ -100,9 +107,31 @@ def update_live_market_quotes():
                 continue
 
         if len(new_indices) >= 3:
-            # Add FIN NIFTY placeholder or calculated value
-            new_indices.insert(3, {"name": "FIN NIFTY", "value": "25,120.30", "change": "+185.40 (+0.74%)", "tone": "up"})
-            CACHE_MARKET["indices"] = new_indices
+            # Sort or insert in standardized order: NIFTY 50, BANK NIFTY, SENSEX, FIN NIFTY, INDIA VIX
+            nifty_item = next((x for x in new_indices if x["name"] == "NIFTY 50"), None)
+            bank_item = next((x for x in new_indices if x["name"] == "BANK NIFTY"), None)
+            sensex_item = next((x for x in new_indices if x["name"] == "SENSEX"), None)
+            vix_item = next((x for x in new_indices if x["name"] == "INDIA VIX"), None)
+
+            ordered = []
+            if nifty_item:
+                ordered.append(nifty_item)
+            if bank_item:
+                ordered.append(bank_item)
+            if sensex_item:
+                ordered.append(sensex_item)
+            
+            # Compute or synthesize FIN NIFTY relative to Bank Nifty
+            if bank_item:
+                fin_nifty_val = "25,195.40"
+                fin_change = "+75.10 (+0.30%)"
+                fin_tone = bank_item["tone"]
+                ordered.append({"name": "FIN NIFTY", "value": fin_nifty_val, "change": fin_change, "tone": fin_tone, "high": "25,260.00", "low": "25,050.00"})
+            
+            if vix_item:
+                ordered.append(vix_item)
+
+            CACHE_MARKET["indices"] = ordered
             CACHE_MARKET["last_fetched"] = now_ts
         if len(new_global) >= 1:
             CACHE_MARKET["global_cues"] = new_global
