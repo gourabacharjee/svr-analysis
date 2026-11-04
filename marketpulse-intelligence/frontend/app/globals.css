@@ -4,21 +4,21 @@
 
 :root {
   color-scheme: light;
-  --bg-main: #f8fafc;
+  --bg-main: #f0f4f8;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
-  --bg-subtle: #f8fafc;
-  --border-subtle: #e2e8f0;
+  --bg-card-hover: #f8fafc;
+  --bg-subtle: #f0f4f8;
+  --border-subtle: #e6edf5;
   --border-active: #cbd5e1;
   --text-primary: #0f172a;
   --text-secondary: #334155;
   --text-muted: #64748b;
-  --accent-blue: #1d4ed8;
+  --accent-blue: #0066ff;
   --accent-cyan: #0284c7;
-  --accent-green: #047857;
-  --accent-red: #dc2626;
+  --accent-green: #059669;
+  --accent-red: #e02424;
   --accent-amber: #b45309;
-  --accent-purple: #6d28d9;
+  --accent-purple: #7c3aed;
 }
 
 * {
@@ -27,7 +27,7 @@
 
 body {
   margin: 0;
-  background-color: #f8fafc;
+  background-color: #f0f4f8;
   color: #0f172a;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
@@ -44,7 +44,7 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f0f4f8;
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
@@ -81,11 +81,11 @@ body {
 
 /* Gradient accents */
 .brand-gradient {
-  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, #0066ff 0%, #00c6ff 100%);
 }
 
 .brand-text-gradient {
-  background: linear-gradient(135deg, #0284c7 0%, #0d9488 50%, #059669 100%);
+  background: linear-gradient(135deg, #0066ff 0%, #0284c7 50%, #059669 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -111,25 +111,20 @@ body {
 }
 
 /* ==========================================================================
-   THEME STYLING: SUNNY WHITE DEFAULT & DARK THEME TOGGLE
+   THEME STYLING: MODERN TRADEAPP CLEAN WHITE DESIGN & BLACK TERMINAL
    ========================================================================== */
 
-/* 1. SUNNY (WHITE) THEME: PROFESSIONAL FINANCIAL TRADING DESK DESIGN */
+/* 1. LIGHT THEME (TRADEAPP CLEAN WHITE FINTECH AESTHETIC) */
 body.theme-light,
 .theme-light {
   color-scheme: light;
-  background-color: #F8FAFC !important;
-  /* Professional micro-dot financial grid texture */
-  background-image: 
-    radial-gradient(rgba(100, 116, 139, 0.16) 1.2px, transparent 1.2px),
-    linear-gradient(to bottom, #FFFFFF 0%, #F8FAFC 260px, #F1F5F9 100%) !important;
-  background-size: 22px 22px, 100% 100% !important;
-  background-attachment: fixed !important;
+  background-color: #F0F4F8 !important;
+  background-image: none !important;
   color: #0F172A !important;
 }
 
 .theme-light ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #F0F4F8;
 }
 .theme-light ::-webkit-scrollbar-thumb {
   background: #CBD5E1;
@@ -138,7 +133,7 @@ body.theme-light,
   background: #94A3B8;
 }
 
-/* Base Headings & Paragraphs High-Contrast Defaults */
+/* Typography Defaults in Light Mode */
 .theme-light h1,
 .theme-light h2,
 .theme-light h3,
@@ -147,35 +142,33 @@ body.theme-light,
 .theme-light h6 {
   color: #0F172A !important;
   font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
 }
 
 .theme-light p {
-  color: #1E293B;
+  color: #334155;
 }
 
-/* Background Overrides for Sunny White Mode */
+/* Background Overrides: Soft Blue-Gray Canvas (#F0F4F8) */
 .theme-light [class*="bg-[#070B12]"],
 .theme-light [class*="bg-[#080D17]"],
 .theme-light [class*="bg-[#080D18]"] {
-  background-color: #F8FAFC !important;
-  background-image: 
-    radial-gradient(rgba(100, 116, 139, 0.16) 1.2px, transparent 1.2px),
-    linear-gradient(to bottom, #FFFFFF 0%, #F8FAFC 260px, #F1F5F9 100%) !important;
-  background-size: 22px 22px, 100% 100% !important;
-  background-attachment: fixed !important;
+  background-color: #F0F4F8 !important;
+  background-image: none !important;
 }
 
+/* Header & Sidebar in TradeApp Style: Pure Frosted White */
 .theme-light header {
-  background: rgba(255, 255, 255, 0.96) !important;
-  backdrop-filter: blur(14px) !important;
-  border-bottom: 1px solid #E2E8F0 !important;
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05) !important;
+  background: rgba(255, 255, 255, 0.97) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid #E6EDF5 !important;
+  box-shadow: 0 1px 4px 0 rgba(30, 41, 59, 0.03) !important;
 }
 
 .theme-light aside {
   background-color: #FFFFFF !important;
-  border-right: 1px solid #E2E8F0 !important;
-  box-shadow: 1px 0 4px 0 rgba(15, 23, 42, 0.03) !important;
+  border-right: 1px solid #E6EDF5 !important;
+  box-shadow: 1px 0 6px 0 rgba(30, 41, 59, 0.03) !important;
 }
 
 .theme-light [class*="bg-[#0A101C]"],
@@ -186,21 +179,23 @@ body.theme-light,
   background-color: #FFFFFF !important;
 }
 
-/* Elevated White Cards with Soft Shadow and Border */
+/* TradeApp Cards: Pure White, Rounded-2xl, Soft Elevation Shadow */
 .theme-light article,
 .theme-light [class*="bg-[#0D1525]"] {
   background-color: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 4px 8px -2px rgba(15, 23, 42, 0.04) !important;
+  border: 1px solid #E6EDF5 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 4px 20px -2px rgba(50, 70, 100, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03) !important;
 }
 
 .theme-light article:hover,
 .theme-light [class*="bg-[#0D1525]"]:hover {
   border-color: #CBD5E1 !important;
-  box-shadow: 0 4px 14px 0 rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04) !important;
+  box-shadow: 0 8px 25px -4px rgba(50, 70, 100, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+  transform: translateY(-1px) !important;
 }
 
-/* Secondary Panels, Sub-cards, & Filter bars */
+/* Secondary Panels, Filter bars, and Sub-containers */
 .theme-light [class*="bg-[#101D33]"],
 .theme-light [class*="bg-[#101C30]"],
 .theme-light [class*="bg-[#111A2D]"],
@@ -214,8 +209,8 @@ body.theme-light,
 .theme-light [class*="bg-[#14233A]"],
 .theme-light [class*="bg-[#14233C]"],
 .theme-light [class*="bg-[#15233A]"] {
-  background-color: #F8FAFC !important;
-  border-color: #E2E8F0 !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6EDF5 !important;
 }
 
 .theme-light [class*="bg-[#162740]"],
@@ -224,31 +219,34 @@ body.theme-light,
 .theme-light [class*="bg-[#1A2E4E]"],
 .theme-light [class*="bg-[#1C2E4C]"],
 .theme-light [class*="bg-[#1F365C]"] {
-  background-color: #F1F5F9 !important;
+  background-color: #F8FAFC !important;
 }
 
-/* Tinted Financial Badges and Radar Sections in Sunny Mode */
+/* Financial Accent Cards in TradeApp Style */
 .theme-light [class*="bg-[#0C1D2D]"] {
   background-color: #EFF6FF !important;
+  border-color: #DBEAFE !important;
 }
 .theme-light [class*="bg-[#0F1E25]"],
 .theme-light [class*="bg-[#101D22]"] {
   background-color: #ECFDF5 !important;
+  border-color: #D1FAE5 !important;
 }
 .theme-light [class*="bg-[#16121C]"],
 .theme-light [class*="bg-[#18121E]"],
 .theme-light [class*="bg-[#181320]"] {
   background-color: #FFF1F2 !important;
+  border-color: #FFE4E6 !important;
 }
 
-/* All Borders in Sunny Mode */
+/* Clean Borders in Light Mode */
 .theme-light [class*="border-[#1"],
 .theme-light [class*="border-[#2"] {
-  border-color: #E2E8F0 !important;
+  border-color: #E6EDF5 !important;
 }
 
 /* ==========================================================================
-   FONT VISIBILITY AND HIGH-CONTRAST TYPOGRAPHY IN SUNNY MODE
+   HIGH-CONTRAST TYPOGRAPHY & TRADEAPP METRIC PILLS
    ========================================================================== */
 
 /* 1. All White Text converted to Deep Dark Slate Black */
@@ -267,13 +265,13 @@ body.theme-light,
 .theme-light .text-slate-400,
 .theme-light .text-gray-300,
 .theme-light .text-gray-400 {
-  color: #1E293B !important;
+  color: #334155 !important;
   font-weight: 600 !important;
 }
 
 .theme-light .text-slate-500,
 .theme-light .text-gray-500 {
-  color: #334155 !important;
+  color: #475569 !important;
 }
 
 .theme-light [class*="text-[#5"],
@@ -283,114 +281,126 @@ body.theme-light,
 .theme-light [class*="text-[#9"],
 .theme-light [class*="text-[#B"],
 .theme-light [class*="text-[#C"] {
-  color: #1E293B !important;
+  color: #334155 !important;
 }
 
-/* 3. High-Contrast Deep Accent Colors on White Backgrounds */
-/* Rich Emerald (Green) */
+/* 3. TradeApp Saturated Metric Colors */
+/* Bullish / Profit (Green) */
 .theme-light .text-emerald-300,
 .theme-light .text-emerald-400 {
-  color: #047857 !important;
+  color: #059669 !important;
   font-weight: 700 !important;
 }
 
-/* Rich Crimson (Red / Bearish / Loss) */
+/* Bearish / Loss (Red) */
 .theme-light .text-rose-300,
 .theme-light .text-rose-400 {
-  color: #DC2626 !important;
+  color: #E02424 !important;
   font-weight: 700 !important;
 }
 
-/* Rich Amber (Yellow / Volatile / Neutral) */
+/* Volatile / Warning (Amber) */
 .theme-light .text-amber-300,
 .theme-light .text-amber-400 {
   color: #B45309 !important;
   font-weight: 700 !important;
 }
 
-/* Rich Ocean Cyan */
+/* Ocean Cyan */
 .theme-light .text-cyan-300,
 .theme-light .text-cyan-400 {
-  color: #0369A1 !important;
+  color: #0284C7 !important;
   font-weight: 700 !important;
 }
 
-/* Rich Royal Blue */
+/* TradeApp Royal Blue */
 .theme-light .text-blue-300,
 .theme-light .text-blue-400,
 .theme-light .text-[#60A5FA] {
-  color: #1D4ED8 !important;
+  color: #0066FF !important;
   font-weight: 700 !important;
 }
 
-/* Rich Sky Blue */
+/* Sky Blue */
 .theme-light .text-sky-300,
 .theme-light .text-sky-400 {
   color: #0284C7 !important;
   font-weight: 700 !important;
 }
 
-/* Rich Violet */
+/* Violet */
 .theme-light .text-purple-300,
 .theme-light .text-purple-400 {
-  color: #6D28D9 !important;
+  color: #7C3AED !important;
   font-weight: 700 !important;
 }
 
-/* Badges with Low-Opacity Dark Backgrounds converted to Crisp Light Badges */
+/* TradeApp Clean Badges & Pills */
 .theme-light [class*="bg-emerald-950"],
 .theme-light [class*="bg-emerald-900"] {
-  background-color: #ECFDF5 !important;
+  background-color: #E6F7F0 !important;
   border-color: #A7F3D0 !important;
 }
 .theme-light [class*="bg-blue-950"],
 .theme-light [class*="bg-blue-900"] {
-  background-color: #EFF6FF !important;
+  background-color: #EBF5FF !important;
   border-color: #BFDBFE !important;
 }
 .theme-light [class*="bg-rose-950"],
 .theme-light [class*="bg-rose-900"] {
-  background-color: #FFF1F2 !important;
+  background-color: #FDE8E8 !important;
   border-color: #FECDD3 !important;
 }
 .theme-light [class*="bg-amber-950"],
 .theme-light [class*="bg-amber-900"] {
-  background-color: #FFFBEB !important;
+  background-color: #FEF3C7 !important;
   border-color: #FDE68A !important;
 }
 
-/* Top Marquee Separator & Details */
+/* Ticker Marquee in Light Mode */
+.theme-light section[class*="bg-[#0A101D]"] {
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid #E6EDF5 !important;
+}
+.theme-light div[class*="bg-[#101D33]"] {
+  background-color: #F0F4F8 !important;
+  border-right: 1px solid #E6EDF5 !important;
+  color: #0066FF !important;
+}
 .theme-light [class*="text-[#20324E]"] {
   color: #CBD5E1 !important;
 }
 
-/* Inputs & Placeholder in Sunny Mode */
+/* Inputs & Search in Light Mode */
 .theme-light input {
   color: #0F172A !important;
   background-color: #FFFFFF !important;
-  border-color: #CBD5E1 !important;
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 0.75rem !important;
+}
+.theme-light input:focus {
+  border-color: #0066FF !important;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.12) !important;
 }
 .theme-light input::placeholder {
   color: #64748B !important;
-  font-weight: 500 !important;
 }
 
-/* Red Alert Catalyst Banner & Cards in Sunny Mode */
+/* Breaking Alert Banner in Light Mode */
 .theme-light .bg-gradient-to-r.from-red-950 {
   background: linear-gradient(to right, #FFF5F5, #FEE2E2, #FFFFFF) !important;
-  border: 1px solid #F87171 !important;
-  box-shadow: 0 4px 16px -1px rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid #FCA5A5 !important;
+  box-shadow: 0 4px 16px -1px rgba(224, 36, 36, 0.12) !important;
 }
 .theme-light .bg-gradient-to-br.from-\[\#260A10\] {
   background: linear-gradient(135deg, #FFF5F5, #FFFFFF) !important;
-  border: 1px solid #F87171 !important;
-  box-shadow: 0 4px 14px -1px rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid #FCA5A5 !important;
+  box-shadow: 0 4px 14px -1px rgba(224, 36, 36, 0.1) !important;
 }
 .theme-light .bg-red-950\/70,
 .theme-light .bg-red-950\/80,
 .theme-light .bg-red-950\/90 {
-  background-color: #FEE2E2 !important;
+  background-color: #FDE8E8 !important;
 }
 .theme-light .text-red-100,
 .theme-light .text-red-200 {
@@ -400,33 +410,22 @@ body.theme-light,
   color: #991B1B !important;
 }
 
-/* Gradients for Info Headers in Sunny Mode */
-.theme-light .bg-gradient-to-r.from-blue-950\/40 {
-  background: linear-gradient(to right, #EFF6FF, #FFFFFF) !important;
-  border-color: #BFDBFE !important;
-}
-.theme-light .bg-gradient-to-r.from-emerald-950\/40 {
-  background: linear-gradient(to right, #ECFDF5, #FFFFFF) !important;
-  border-color: #A7F3D0 !important;
-}
-.theme-light .bg-gradient-to-r.from-rose-950\/40 {
-  background: linear-gradient(to right, #FFF1F2, #FFFFFF) !important;
-  border-color: #FECDD3 !important;
-}
-
-/* Sidebar Navigation Items in Sunny Mode */
+/* TradeApp Navigation Sidebar Items */
 .theme-light aside button {
-  color: #334155 !important;
+  border-radius: 0.75rem !important;
+  color: #64748B !important;
   font-weight: 600 !important;
+  transition: all 0.15s ease-in-out !important;
 }
 .theme-light aside button:hover {
-  background-color: #F1F5F9 !important;
+  background-color: #F8FAFC !important;
   color: #0F172A !important;
 }
-
-/* Generic Button borders in Sunny Mode */
-.theme-light button {
-  border-color: #E2E8F0;
+.theme-light aside button.bg-gradient-to-r {
+  background: rgba(0, 102, 255, 0.08) !important;
+  color: #0066FF !important;
+  border-left-color: #0066FF !important;
+  font-weight: 700 !important;
 }
 
 

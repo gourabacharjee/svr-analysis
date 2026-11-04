@@ -1309,24 +1309,23 @@ export default function SVRAnalysisHome() {
               )}
             </button>
 
-            {/* Single "Sunny" Theme Toggle Button */}
+            {/* Theme Toggle Button (Icon Only: Sun in Light Mode / Moon in Dark Mode) */}
             <button
               type="button"
               onClick={toggleTheme}
-              title={isDarkMode ? "Switch to Sunny Mode (White Background)" : "Switch to Dark Mode (Black Background)"}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all duration-200 cursor-pointer select-none shrink-0 shadow-sm active:scale-95 ${
+              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border transition-all duration-200 cursor-pointer select-none shrink-0 shadow-sm active:scale-90 ${
                 isDarkMode
-                  ? "bg-[#142036] hover:bg-[#1E2E4A] border-amber-500/40 text-amber-300 hover:border-amber-400 hover:shadow-[0_0_12px_rgba(245,158,11,0.25)]"
-                  : "bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 shadow-sm"
+                  ? "bg-[#142036] hover:bg-[#1C2C47] border-[#223657] text-indigo-300 hover:text-white"
+                  : "bg-white hover:bg-slate-100 border-slate-200 text-amber-500 hover:text-amber-600 shadow-sm hover:shadow"
               }`}
             >
-              <Sun
-                size={16}
-                className="text-amber-500 transition-transform duration-500 hover:rotate-90 shrink-0"
-              />
-              <span className="text-xs font-black tracking-wide">
-                Sunny
-              </span>
+              {isDarkMode ? (
+                <Moon size={18} className="text-indigo-400 transition-transform duration-300 hover:-rotate-12" />
+              ) : (
+                <Sun size={19} className="text-amber-500 transition-transform duration-500 hover:rotate-90" />
+              )}
             </button>
 
             {/* Desktop Tagline */}
@@ -1509,24 +1508,6 @@ export default function SVRAnalysisHome() {
               </span>
             </div>
 
-            {/* Mobile Single "Sunny" Theme Toggle Button */}
-            <div className="px-3 py-2 mb-2 rounded-xl bg-[#101C30] border border-[#1A2E4E] flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-300">Theme</span>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                title={isDarkMode ? "Switch to Sunny Mode" : "Switch to Dark Mode"}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all shadow-sm ${
-                  isDarkMode
-                    ? "bg-[#142036] border-amber-500/40 text-amber-300"
-                    : "bg-amber-50 border-amber-300 text-amber-900"
-                }`}
-              >
-                <Sun size={15} className="text-amber-500 shrink-0" />
-                <span className="text-xs font-black">Sunny</span>
-              </button>
-            </div>
-
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#5A7194]">
               Trading Intelligence
             </div>
@@ -1559,24 +1540,6 @@ export default function SVRAnalysisHome() {
                 </button>
               );
             })}
-          </div>
-
-          {/* SVR Analysis Mission Card (Bottom Sidebar) */}
-          <div className="p-3 border-t border-[#16243A]">
-            <div className="bg-gradient-to-br from-[#101D33] to-[#0A1424] border border-[#1F3557] rounded-xl p-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-cyan-400">
-                <Shield size={14} />
-                <span>SVR Guarantee</span>
-              </div>
-              <p className="text-[11px] text-[#93A6C4] mt-1.5 leading-relaxed">
-                All Indian stock market news, SEBI circulars, pre-market levels & analytics are
-                100% free of cost forever for retail traders.
-              </p>
-              <div className="mt-2.5 pt-2 border-t border-[#1C3050] flex items-center justify-between text-[10px] text-[#6981A4]">
-                <span>Version 1.0 Live</span>
-                <span className="text-emerald-400 font-semibold">Active Hub</span>
-              </div>
-            </div>
           </div>
         </aside>
 
