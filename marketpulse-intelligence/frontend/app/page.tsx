@@ -761,289 +761,426 @@ export default function SVRAnalysisHome() {
       </section>
 
       {/* 2. MAIN HEADER */}
-      <header className="bg-[#0B1220]/95 backdrop-blur sticky top-0 z-30 border-b border-[#182740] px-4 lg:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-[#9CB1D1] hover:text-white rounded-lg bg-[#142036]"
-          >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+      <header className="bg-[#0B1220]/98 backdrop-blur sticky top-0 z-30 border-b border-[#182740] px-3 sm:px-6 py-2.5 sm:py-3.5">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
+          {/* Left Brand Area */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 text-[#9CB1D1] hover:text-white rounded-lg bg-[#142036] shrink-0"
+              aria-label="Toggle Navigation"
+            >
+              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
 
-          {/* SVR Analysis Official Logo & Brand */}
-          <div className="flex items-center gap-3">
-            <img
-              src={logoSrc}
-              alt="SVR Analysis Logo"
-              className="h-11 w-auto object-contain rounded-xl shadow-lg shadow-emerald-950/40 border border-emerald-500/30 bg-[#0B1424] p-0.5"
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg lg:text-xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
-                  SVR <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">ANALYSIS</span>
-                </h1>
-                <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  100% Free
-                </span>
+            {/* SVR Analysis Official Logo & Brand */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <img
+                src={logoSrc}
+                alt="SVR Analysis Logo"
+                className="h-9 w-9 sm:h-11 sm:w-11 object-contain rounded-xl shadow-md border border-emerald-500/30 bg-[#0B1424] p-0.5 shrink-0"
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h1 className="text-base sm:text-lg lg:text-xl font-black tracking-tight text-white flex items-center gap-1 truncate">
+                    SVR <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">ANALYSIS</span>
+                  </h1>
+                  <span className="hidden md:inline-flex bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                    100% Free
+                  </span>
+                </div>
+                <p className="text-[9px] sm:text-[10px] tracking-wider font-semibold text-emerald-400/90 hidden sm:block truncate">
+                  TRADING | RESEARCH | ANALYSIS
+                </p>
               </div>
-              <p className="text-[10px] tracking-wider font-semibold text-emerald-400/90 hidden sm:block">
-                TRADING | RESEARCH | ANALYSIS
-              </p>
             </div>
           </div>
-        </div>
 
-        {/* Global Search Bar with Live Interactive Dropdown */}
-        <div className="hidden md:flex items-center flex-1 max-w-md mx-6 relative">
-          <div className="relative w-full">
-            <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#657B9E]"
-            />
-            <input
-              type="text"
-              placeholder="Search stocks (e.g. RELIANCE, WIPRO, CEO, SEBI, BAN)..."
-              value={searchQuery}
-              onFocus={() => setIsSearchFocused(true)}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setIsSearchFocused(true);
-              }}
-              className="w-full bg-[#111A2D] border border-[#1D2F4D] focus:border-emerald-500 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-[#5B7193] outline-none transition shadow-inner"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setIsSearchFocused(false);
+          {/* Global Search Bar on Desktop (md+) with Live Interactive Dropdown */}
+          <div className="hidden md:flex items-center flex-1 max-w-md mx-4 lg:mx-6 relative">
+            <div className="relative w-full">
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#657B9E]"
+              />
+              <input
+                type="text"
+                placeholder="Search Indian markets (e.g. NIFTY, BANKING, IT, SEBI, RBI)..."
+                value={searchQuery}
+                onFocus={() => setIsSearchFocused(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchFocused(true);
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
-                title="Clear search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          {/* Live Search Floating Dropdown */}
-          {searchQuery.trim().length > 0 && isSearchFocused && searchResults && (
-            <div className="absolute top-11 left-0 right-0 bg-[#0B1424] border border-[#1F365A] rounded-2xl shadow-2xl p-3 z-50 max-h-[460px] overflow-y-auto space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#162844] text-[11px]">
-                <span className="text-[#8BA0BF]">
-                  Live search for &quot;<strong className="text-white">{searchQuery}</strong>&quot;
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">
-                  {searchResults.totalCount} matches
-                </span>
-              </div>
-
-              {searchResults.totalCount === 0 ? (
-                <div className="py-6 text-center text-xs text-[#6A81A4] space-y-1">
-                  <p>No direct matches found for &quot;{searchQuery}&quot;.</p>
-                  <p className="text-[10px] text-[#556985]">
-                    Try searching: <strong>NIFTY</strong>, <strong>BANKING</strong>, <strong>IT</strong>, <strong>AUTO</strong>, <strong>PHARMA</strong>, <strong>SEBI</strong>, or <strong>RBI</strong>
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* Matching Catalysts / CEO News */}
-                  {searchResults.catalysts.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                        <Building2 size={12} /> Company Catalysts & Leadership ({searchResults.catalysts.length})
-                      </span>
-                      {searchResults.catalysts.map((cat) => (
-                        <div
-                          key={`scat-${cat.id}`}
-                          onClick={() => {
-                            setActiveTab("catalysts");
-                            setIsSearchFocused(false);
-                          }}
-                          className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E] space-y-1"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-mono font-black text-cyan-300">
-                              NSE: {cat.symbol}
-                            </span>
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">
-                              {cat.catalyst_type}
-                            </span>
-                          </div>
-                          <p className="text-xs font-semibold text-white leading-tight">
-                            {cat.headline}
-                          </p>
-                          <p className="text-[10px] text-emerald-300 line-clamp-1">
-                            {cat.action_bias} • Support: {cat.support_level}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Matching Stock News */}
-                  {searchResults.news.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
-                        <Newspaper size={12} /> Stock & Market News ({searchResults.news.length})
-                      </span>
-                      {searchResults.news.slice(0, 4).map((n) => (
-                        <div
-                          key={`snews-${n.id}`}
-                          onClick={() => {
-                            setActiveTab(
-                              n.category.toLowerCase().includes("sector")
-                                ? "sector_news"
-                                : "indian_market_news"
-                            );
-                            setIsSearchFocused(false);
-                          }}
-                          className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E] space-y-1"
-                        >
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-blue-400 font-semibold">{n.category}</span>
-                            <span className="text-[#657C9E] font-mono">{n.stocks_affected}</span>
-                          </div>
-                          <p className="text-xs font-bold text-white leading-snug line-clamp-2">
-                            {n.headline}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Matching SEBI Circulars */}
-                  {searchResults.sebi.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
-                        <Scale size={12} /> SEBI Rules & Guidelines ({searchResults.sebi.length})
-                      </span>
-                      {searchResults.sebi.map((s) => (
-                        <div
-                          key={`ssebi-${s.id}`}
-                          onClick={() => {
-                            setActiveTab("sebi");
-                            setIsSearchFocused(false);
-                          }}
-                          className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E]"
-                        >
-                          <span className="text-[10px] text-amber-300 font-bold block">{s.category}</span>
-                          <p className="text-xs font-semibold text-white leading-tight">{s.title}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Matching F&O Ban */}
-                  {searchResults.banList.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
-                        <ShieldAlert size={12} /> F&O Ban List ({searchResults.banList.length})
-                      </span>
-                      {searchResults.banList.map((b) => (
-                        <div
-                          key={`sban-${b.id}`}
-                          onClick={() => {
-                            setActiveTab("fo_ban");
-                            setIsSearchFocused(false);
-                          }}
-                          className="p-2 rounded-xl bg-[#18121E] border border-rose-900/40 flex items-center justify-between text-xs"
-                        >
-                          <span className="font-bold text-white">{b.symbol} ({b.company_name})</span>
-                          <span className="text-rose-400 font-mono font-bold">{b.mwpl_percent} In Ban</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                className="w-full bg-[#111A2D] border border-[#1D2F4D] focus:border-emerald-500 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-[#5B7193] outline-none transition shadow-inner"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setIsSearchFocused(false);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+                  title="Clear search"
+                >
+                  ✕
+                </button>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Mobile Search Icon Toggle */}
-        <button
-          onClick={() => setShowMobileSearch(!showMobileSearch)}
-          className="md:hidden p-2 rounded-lg bg-[#142036] text-[#9CB1D1] hover:text-white"
-          title="Search"
-        >
-          <Search size={18} />
-        </button>
+            {/* Live Search Floating Dropdown on Desktop */}
+            {searchQuery.trim().length > 0 && isSearchFocused && searchResults && (
+              <div className="absolute top-11 left-0 right-0 bg-[#0B1424] border border-[#1F365A] rounded-2xl shadow-2xl p-3 z-50 max-h-[460px] overflow-y-auto space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#162844] text-[11px]">
+                  <span className="text-[#8BA0BF]">
+                    Live search for &quot;<strong className="text-white">{searchQuery}</strong>&quot;
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">
+                    {searchResults.totalCount} matches
+                  </span>
+                </div>
 
-        {/* Header Badges, Auto-Sync Status & Actions */}
-        <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#101C30] border border-[#1A2E4E] text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 pulse-indicator"></span>
-            <span className="text-[#89A0C3] text-[11px]">
-              Live Sync: <strong className="text-emerald-400">{secondsUntilSync}s</strong>
-            </span>
-          </div>
+                {searchResults.totalCount === 0 ? (
+                  <div className="py-6 text-center text-xs text-[#6A81A4] space-y-1">
+                    <p>No direct matches found for &quot;{searchQuery}&quot;.</p>
+                    <p className="text-[10px] text-[#556985]">
+                      Try searching: <strong>NIFTY</strong>, <strong>BANKING</strong>, <strong>IT</strong>, <strong>AUTO</strong>, <strong>PHARMA</strong>, <strong>SEBI</strong>, or <strong>RBI</strong>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Matching Catalysts / CEO News */}
+                    {searchResults.catalysts.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                          <Building2 size={12} /> Company Catalysts & Leadership ({searchResults.catalysts.length})
+                        </span>
+                        {searchResults.catalysts.map((cat) => (
+                          <div
+                            key={`scat-${cat.id}`}
+                            onClick={() => {
+                              setActiveTab("catalysts");
+                              setIsSearchFocused(false);
+                            }}
+                            className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E] space-y-1"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-mono font-black text-cyan-300">
+                                NSE: {cat.symbol}
+                              </span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">
+                                {cat.catalyst_type}
+                              </span>
+                            </div>
+                            <p className="text-xs font-semibold text-white leading-tight">
+                              {cat.headline}
+                            </p>
+                            <p className="text-[10px] text-emerald-300 line-clamp-1">
+                              {cat.action_bias} • Support: {cat.support_level}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-          <button
-            onClick={fetchData}
-            title="Refresh Market Intelligence & News Wire"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 text-xs text-emerald-300 border border-emerald-500/30 transition shadow-sm"
-          >
-            <RefreshCw size={13} className={isRefreshing ? "animate-spin text-emerald-400" : ""} />
-            <span className="hidden sm:inline font-bold">Sync Live</span>
-          </button>
+                    {/* Matching Stock News */}
+                    {searchResults.news.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                          <Newspaper size={12} /> Indian Market & Sector News ({searchResults.news.length})
+                        </span>
+                        {searchResults.news.slice(0, 4).map((n) => (
+                          <div
+                            key={`snews-${n.id}`}
+                            onClick={() => {
+                              setActiveTab(
+                                n.category.toLowerCase().includes("sector")
+                                  ? "sector_news"
+                                  : "indian_market_news"
+                              );
+                              setIsSearchFocused(false);
+                            }}
+                            className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E] space-y-1"
+                          >
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className="text-blue-400 font-semibold">{n.category}</span>
+                              <span className="text-[#657C9E] font-mono">{n.stocks_affected}</span>
+                            </div>
+                            <p className="text-xs font-bold text-white leading-snug line-clamp-2">
+                              {n.headline}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-          <button
-            onClick={() => setActiveTab("watchlist")}
-            className="relative p-2 rounded-lg bg-[#142036] hover:bg-[#1A2B49] text-[#9CB1D1] hover:text-white border border-[#1E3050] transition"
-            title="View Saved Bookmarks"
-          >
-            <Bookmark size={16} />
-            {savedNewsIds.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
-                {savedNewsIds.length}
-              </span>
+                    {/* Matching SEBI Circulars */}
+                    {searchResults.sebi.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+                          <Scale size={12} /> SEBI Rules & Guidelines ({searchResults.sebi.length})
+                        </span>
+                        {searchResults.sebi.map((s) => (
+                          <div
+                            key={`ssebi-${s.id}`}
+                            onClick={() => {
+                              setActiveTab("sebi");
+                              setIsSearchFocused(false);
+                            }}
+                            className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E]"
+                          >
+                            <span className="text-[10px] text-amber-300 font-bold block">{s.category}</span>
+                            <p className="text-xs font-semibold text-white leading-tight">{s.title}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Matching F&O Ban */}
+                    {searchResults.banList.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
+                          <ShieldAlert size={12} /> F&O Ban List ({searchResults.banList.length})
+                        </span>
+                        {searchResults.banList.map((b) => (
+                          <div
+                            key={`sban-${b.id}`}
+                            onClick={() => {
+                              setActiveTab("fo_ban");
+                              setIsSearchFocused(false);
+                            }}
+                            className="p-2 rounded-xl bg-[#18121E] border border-rose-900/40 flex items-center justify-between text-xs"
+                          >
+                            <span className="font-bold text-white">{b.symbol} ({b.company_name})</span>
+                            <span className="text-rose-400 font-mono font-bold">{b.mwpl_percent} In Ban</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
-          </button>
+          </div>
 
-          <div className="hidden xl:flex flex-col text-right">
-            <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold justify-end">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-              NSE · BSE Real-Time Feed
+          {/* Right-Hand Action Controls: Zero Overlap with Brand */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Mobile Search Toggle Button */}
+            <button
+              onClick={() => {
+                setShowMobileSearch(!showMobileSearch);
+                if (!showMobileSearch) setIsSearchFocused(true);
+              }}
+              className={`md:hidden p-2 rounded-lg transition border shrink-0 ${
+                showMobileSearch
+                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                  : "bg-[#142036] text-[#9CB1D1] hover:text-white border-[#1E3050]"
+              }`}
+              title="Search Market Intelligence"
+              aria-label="Toggle Search"
+            >
+              <Search size={16} />
+            </button>
+
+            {/* Desktop Live Sync Countdown */}
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#101C30] border border-[#1A2E4E] text-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 pulse-indicator"></span>
+              <span className="text-[#89A0C3] text-[11px]">
+                Live Sync: <strong className="text-emerald-400">{secondsUntilSync}s</strong>
+              </span>
             </div>
-            <span className="text-[10px] text-[#7186A6]">No Subscription • No Paywall</span>
+
+            {/* Sync Live Button */}
+            <button
+              onClick={fetchData}
+              title="Refresh Market Intelligence & News Wire"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 text-xs text-emerald-300 border border-emerald-500/30 transition shadow-sm shrink-0"
+            >
+              <RefreshCw size={14} className={isRefreshing ? "animate-spin text-emerald-400" : ""} />
+              <span className="hidden sm:inline font-bold">Sync Live</span>
+            </button>
+
+            {/* Watchlist Bookmarks Button */}
+            <button
+              onClick={() => setActiveTab("watchlist")}
+              className="relative p-2 rounded-lg bg-[#142036] hover:bg-[#1A2B49] text-[#9CB1D1] hover:text-white border border-[#1E3050] transition shrink-0"
+              title="View Saved Bookmarks"
+            >
+              <Bookmark size={16} />
+              {savedNewsIds.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  {savedNewsIds.length}
+                </span>
+              )}
+            </button>
+
+            {/* Desktop Tagline */}
+            <div className="hidden xl:flex flex-col text-right">
+              <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold justify-end">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                NSE · BSE Real-Time Feed
+              </div>
+              <span className="text-[10px] text-[#7186A6]">No Subscription • No Paywall</span>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Search Row: Cleanly nested inside Header without absolute overlap */}
+        {showMobileSearch && (
+          <div className="md:hidden mt-2.5 pt-2.5 border-t border-[#182740] relative">
+            <div className="relative w-full">
+              <Search
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#657B9E]"
+              />
+              <input
+                type="text"
+                placeholder="Search Nifty, Banking, IT, SEBI, RBI..."
+                value={searchQuery}
+                onFocus={() => setIsSearchFocused(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchFocused(true);
+                }}
+                className="w-full bg-[#111A2D] border border-emerald-500/40 focus:border-emerald-400 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-[#5B7193] outline-none transition"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setIsSearchFocused(false);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Live Search Dropdown */}
+            {searchQuery.trim().length > 0 && isSearchFocused && searchResults && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#0B1424] border border-[#1F365A] rounded-2xl shadow-2xl p-3 z-50 max-h-[360px] overflow-y-auto space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#162844] text-[11px]">
+                  <span className="text-[#8BA0BF]">
+                    Live search for &quot;<strong className="text-white">{searchQuery}</strong>&quot;
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">
+                    {searchResults.totalCount} matches
+                  </span>
+                </div>
+
+                {searchResults.totalCount === 0 ? (
+                  <div className="py-4 text-center text-xs text-[#6A81A4] space-y-1">
+                    <p>No direct matches found for &quot;{searchQuery}&quot;.</p>
+                    <p className="text-[10px] text-[#556985]">
+                      Try searching: <strong>NIFTY</strong>, <strong>BANKING</strong>, <strong>IT</strong>, <strong>SEBI</strong>, or <strong>RBI</strong>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Matching Catalysts */}
+                    {searchResults.catalysts.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                          <Building2 size={12} /> Catalysts & Leadership ({searchResults.catalysts.length})
+                        </span>
+                        {searchResults.catalysts.slice(0, 3).map((cat) => (
+                          <div
+                            key={`m-scat-${cat.id}`}
+                            onClick={() => {
+                              setActiveTab("catalysts");
+                              setIsSearchFocused(false);
+                              setShowMobileSearch(false);
+                            }}
+                            className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E] space-y-1"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-mono font-black text-cyan-300">
+                                NSE: {cat.symbol}
+                              </span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">
+                                {cat.catalyst_type}
+                              </span>
+                            </div>
+                            <p className="text-xs font-semibold text-white leading-tight">
+                              {cat.headline}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Matching News */}
+                    {searchResults.news.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                          <Newspaper size={12} /> Market & Sector News ({searchResults.news.length})
+                        </span>
+                        {searchResults.news.slice(0, 4).map((n) => (
+                          <div
+                            key={`m-snews-${n.id}`}
+                            onClick={() => {
+                              setActiveTab(
+                                n.category.toLowerCase().includes("sector")
+                                  ? "sector_news"
+                                  : "indian_market_news"
+                              );
+                              setIsSearchFocused(false);
+                              setShowMobileSearch(false);
+                            }}
+                            className="p-2 rounded-xl bg-[#101C30] hover:bg-[#162744] cursor-pointer transition border border-[#1A2E4E] space-y-1"
+                          >
+                            <span className="text-[10px] text-blue-400 font-semibold block">{n.category}</span>
+                            <p className="text-xs font-bold text-white leading-snug line-clamp-2">
+                              {n.headline}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
-      {/* Mobile Search Bar Drawer */}
-      {showMobileSearch && (
-        <div className="md:hidden bg-[#0A1220] border-b border-[#182740] p-3 sticky top-[69px] z-25">
-          <div className="relative">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#657B9E]" />
-            <input
-              type="text"
-              placeholder="Search stocks (e.g. RELIANCE, WIPRO, CEO, SEBI)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#111A2D] border border-emerald-500/50 rounded-xl pl-9 pr-8 py-2.5 text-xs text-white placeholder-[#5B7193] outline-none"
-              autoFocus
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
+      {/* Mobile Navigation Backdrop Overlay */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-35 lg:hidden"
+        />
       )}
 
       {/* 3. APP BODY (Sidebar + Content) */}
       <div className="flex flex-1 min-h-0">
         {/* SIDEBAR NAVIGATION */}
         <aside
-          className={`fixed lg:sticky top-[102px] lg:top-[102px] z-20 h-[calc(100vh-102px)] w-64 bg-[#0A101C] border-r border-[#16243A] flex flex-col justify-between transition-transform duration-300 ${
+          className={`fixed lg:sticky top-0 lg:top-[102px] z-40 lg:z-20 h-full lg:h-[calc(100vh-102px)] w-72 lg:w-64 bg-[#0A101C] border-r border-[#16243A] flex flex-col justify-between transition-transform duration-300 ${
             mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }`}
         >
           <div className="p-3 overflow-y-auto space-y-1">
+            {/* Mobile Sidebar Close Bar */}
+            <div className="lg:hidden flex items-center justify-between px-3 py-2.5 mb-2 border-b border-[#16243A]">
+              <div className="flex items-center gap-2">
+                <img
+                  src={logoSrc}
+                  alt="SVR Analysis"
+                  className="h-6 w-auto object-contain rounded"
+                />
+                <span className="text-xs font-black text-white">SVR ANALYSIS</span>
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-[#142036]"
+              >
+                <X size={16} />
+              </button>
+            </div>
             {/* Clean Market Status Header */}
             <div className="px-3 py-2 mb-2 flex items-center justify-between border-b border-[#16243A]">
               <div className="flex items-center gap-2">
