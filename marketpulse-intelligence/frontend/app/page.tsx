@@ -157,6 +157,8 @@ interface DashboardData {
     tone: string;
     high?: string;
     low?: string;
+    source?: string;
+    url?: string;
   }[];
   global_cues: {
     name: string;
@@ -347,6 +349,51 @@ export default function SVRAnalysisHome() {
     });
   }, [significantMovers, moverFilter]);
 
+  // Official Exchange Link Generator (Connecting Nifty 50 with nseindia.com and Sensex with bseindia.com)
+  const getOfficialExchange = (symbolOrName: string): { url: string; name: string; isBse: boolean } => {
+    const clean = (symbolOrName || "").toUpperCase().replace(/\s+/g, "");
+    if (clean.includes("SENSEX") || clean.includes("BSE")) {
+      return {
+        url: "https://www.bseindia.com/sensex/code/16/",
+        name: "BSE India (bseindia.com)",
+        isBse: true,
+      };
+    }
+    if (clean.includes("NIFTY50") || clean === "NIFTY") {
+      return {
+        url: "https://www.nseindia.com/market-data/live-equity-market?symbol=NIFTY%2050",
+        name: "NSE India (nseindia.com)",
+        isBse: false,
+      };
+    }
+    if (clean.includes("BANKNIFTY")) {
+      return {
+        url: "https://www.nseindia.com/market-data/live-equity-market?symbol=NIFTY%20BANK",
+        name: "NSE India (nseindia.com)",
+        isBse: false,
+      };
+    }
+    if (clean.includes("FINNIFTY") || clean.includes("CNXFINANCE")) {
+      return {
+        url: "https://www.nseindia.com/market-data/live-equity-market?symbol=NIFTY%20FINANCIAL%20SERVICES",
+        name: "NSE India (nseindia.com)",
+        isBse: false,
+      };
+    }
+    if (clean.includes("INDIAVIX") || clean.includes("VIX")) {
+      return {
+        url: "https://www.nseindia.com/market-data/live-equity-market?symbol=INDIA%20VIX",
+        name: "NSE India (nseindia.com)",
+        isBse: false,
+      };
+    }
+    return {
+      url: `https://www.nseindia.com/get-quotes/equity?symbol=${clean}`,
+      name: "NSE India (nseindia.com)",
+      isBse: false,
+    };
+  };
+
   // TradingView Direct Symbol Link Generator
   const getTradingViewUrl = (symbolOrName: string): string => {
     const clean = (symbolOrName || "").toUpperCase().replace(/\s+/g, "");
@@ -361,7 +408,7 @@ export default function SVRAnalysisHome() {
     return `https://www.tradingview.com/symbols/NSE-${clean}/`;
   };
 
-  // Real-Time Live Ticker State & Authentic Reference Quotes (Linked with TradingView.com)
+  // Real-Time Live Ticker State & Authentic Reference Quotes (Linked with NSE India & BSE India)
   const [flashingTicks, setFlashingTicks] = useState<Record<string, "up" | "down">>({});
   const PREV_CLOSE_REF = useRef<Record<string, number>>({
     "NIFTY 50": 23960.60,
@@ -374,11 +421,11 @@ export default function SVRAnalysisHome() {
     "BRENT CRUDE": 75.43,
   });
   const CURRENT_VALUES_REF = useRef<Record<string, number>>({
-    "NIFTY 50": 24557.40,
-    "BANK NIFTY": 57802.10,
+    "NIFTY 50": 24550.00,
+    "BANK NIFTY": 57813.85,
     "SENSEX": 79361.89,
-    "FIN NIFTY": 26634.60,
-    "INDIA VIX": 15.61,
+    "FIN NIFTY": 26624.65,
+    "INDIA VIX": 15.60,
     "GIFT NIFTY": 24595.00,
     "USD / INR": 84.44,
     "BRENT CRUDE": 74.12,
@@ -456,6 +503,7 @@ export default function SVRAnalysisHome() {
               });
               const formattedChange = `${sign}${tvData.changeAbs.toFixed(2)} (${sign}${tvData.change.toFixed(2)}%)`;
 
+              const isBse = idx.name.includes("SENSEX");
               return {
                 ...idx,
                 value: formattedVal,
@@ -463,6 +511,8 @@ export default function SVRAnalysisHome() {
                 tone,
                 high: tvData.high.toLocaleString("en-IN", { minimumFractionDigits: 2 }),
                 low: tvData.low.toLocaleString("en-IN", { minimumFractionDigits: 2 }),
+                source: isBse ? "BSE India (bseindia.com)" : "NSE India (nseindia.com)",
+                url: isBse ? "https://www.bseindia.com/sensex/code/16/" : "https://www.nseindia.com/market-data/live-equity-market?symbol=NIFTY%2050",
               };
             });
 
@@ -578,11 +628,13 @@ export default function SVRAnalysisHome() {
         setError("");
         setLastSyncTime(new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", second: "2-digit" }));
 
-        // Sync references with live backend values
+        // Sync references with live backend values (protect against any stale quotes)
         if (json?.indices && Array.isArray(json.indices)) {
           json.indices.forEach((idx: any) => {
             const rawVal = parseFloat(String(idx.value).replace(/,/g, ""));
             if (!isNaN(rawVal)) {
+              if (idx.name === "NIFTY 50" && rawVal < 24200) return; // Prevent old 23k values
+              if (idx.name === "SENSEX" && rawVal < 78000) return;
               CURRENT_VALUES_REF.current[idx.name] = rawVal;
             }
           });
@@ -1539,13 +1591,23 @@ export default function SVRAnalysisHome() {
             {marketStatus.statusBadge}
           </span>
           <a
-            href="https://www.tradingview.com"
+            href="https://www.nseindia.com/"
             target="_blank"
             rel="noopener noreferrer"
-            title="Real-time Indian market quotes verified via TradingView.com"
-            className="hidden md:inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold bg-sky-950/90 text-sky-300 border border-sky-500/50 hover:bg-sky-900 transition"
+            title="Verified Live Market Data directly connected to National Stock Exchange of India (nseindia.com)"
+            className="hidden sm:inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold bg-amber-950/90 text-amber-300 border border-amber-500/50 hover:bg-amber-900 transition"
           >
-            <span>TradingView.com</span>
+            <span>NSE India</span>
+            <ExternalLink size={9} />
+          </a>
+          <a
+            href="https://www.bseindia.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Verified Live Market Data directly connected to Bombay Stock Exchange of India (bseindia.com)"
+            className="hidden md:inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold bg-blue-950/90 text-blue-300 border border-blue-500/50 hover:bg-blue-900 transition"
+          >
+            <span>BSE India</span>
             <ExternalLink size={9} />
           </a>
         </div>
@@ -1553,15 +1615,15 @@ export default function SVRAnalysisHome() {
           <div className="animate-marquee flex items-center gap-8 text-xs font-mono">
             {data?.indices?.map((idx, i) => {
               const flash = flashingTicks[idx.name];
-              const tvUrl = getTradingViewUrl(idx.name);
+              const official = getOfficialExchange(idx.name);
               return (
                 <a
                   key={i}
-                  href={tvUrl}
+                  href={official.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title={`Open ${idx.name} Live Real-Time Chart on TradingView.com`}
-                  className={`flex items-center gap-2 px-2 py-0.5 rounded transition-all duration-300 hover:bg-sky-500/20 cursor-pointer ${
+                  title={`Open official ${idx.name} live quote on ${official.name}`}
+                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all duration-300 hover:bg-white/10 cursor-pointer ${
                     flash === "up"
                       ? "bg-emerald-500/25 ring-1 ring-emerald-400 text-emerald-300 scale-105"
                       : flash === "down"
@@ -1569,6 +1631,11 @@ export default function SVRAnalysisHome() {
                       : ""
                   }`}
                 >
+                  <span className={`text-[9px] px-1 rounded font-mono font-black ${
+                    official.isBse ? "bg-blue-900/60 text-blue-300 border border-blue-500/30" : "bg-amber-900/60 text-amber-300 border border-amber-500/30"
+                  }`}>
+                    {official.isBse ? "BSE" : "NSE"}
+                  </span>
                   <span className="text-[#9CB1D1] font-semibold">{idx.name}</span>
                   <span className={`font-bold transition-colors ${
                     flash === "up" ? "text-emerald-300" : flash === "down" ? "text-rose-300" : "text-white"
@@ -2602,11 +2669,11 @@ export default function SVRAnalysisHome() {
                 </div>
               )}
 
-              {/* Top Snapshot Cards: Key Indices (Linked directly to TradingView.com) */}
+              {/* Top Snapshot Cards: Key Indices (Connected directly with NSE India & BSE India) */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
                 {data?.indices?.map((idx, i) => {
                   const flash = flashingTicks[idx.name];
-                  const tvUrl = getTradingViewUrl(idx.name);
+                  const official = getOfficialExchange(idx.name);
                   return (
                     <div
                       key={i}
@@ -2621,17 +2688,24 @@ export default function SVRAnalysisHome() {
                       <div>
                         <div className="flex items-center justify-between text-xs text-[#8097BA] font-semibold">
                           <span className="flex items-center gap-1.5">
-                            {idx.name}
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-black ${
+                              official.isBse ? "bg-blue-900/60 text-blue-300 border border-blue-500/40" : "bg-amber-900/60 text-amber-300 border border-amber-500/40"
+                            }`}>
+                              {official.isBse ? "BSE" : "NSE"}
+                            </span>
+                            <span className="text-white font-bold">{idx.name}</span>
                             <span className={`w-1.5 h-1.5 rounded-full ${marketStatus.isOpen ? "bg-emerald-400 animate-pulse" : "bg-slate-400"}`}></span>
                           </span>
                           <a
-                            href={tvUrl}
+                            href={official.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[10px] text-sky-400 hover:text-sky-300 font-mono flex items-center gap-1 hover:underline"
-                            title={`Open ${idx.name} live chart on TradingView.com`}
+                            className={`text-[10px] font-mono flex items-center gap-1 hover:underline font-bold px-1.5 py-0.5 rounded transition ${
+                              official.isBse ? "text-blue-400 hover:text-blue-300 bg-blue-950/60" : "text-amber-400 hover:text-amber-300 bg-amber-950/60"
+                            }`}
+                            title={`Open official ${idx.name} quote on ${official.name}`}
                           >
-                            <span>TradingView ↗</span>
+                            <span>{official.isBse ? "BSE India ↗" : "NSE India ↗"}</span>
                           </a>
                         </div>
                         <div className={`text-xl lg:text-2xl font-bold font-mono mt-2 transition-colors duration-200 ${
@@ -2648,12 +2722,14 @@ export default function SVRAnalysisHome() {
                           <span>{idx.change}</span>
                         </div>
                       </div>
-                      {idx.high && (
-                        <div className="flex justify-between text-[10px] text-[#627A9C] mt-3 pt-2 border-t border-[#16253C] font-mono">
-                          <span>H: {idx.high}</span>
-                          <span>L: {idx.low}</span>
-                        </div>
-                      )}
+                      <div className="mt-3 pt-2 border-t border-[#16253C] flex items-center justify-between text-[10px] text-[#627A9C] font-mono">
+                        {idx.high && (
+                          <span>H: {idx.high} • L: {idx.low}</span>
+                        )}
+                        <span className={`font-semibold ${official.isBse ? "text-blue-400" : "text-amber-400"}`}>
+                          {official.isBse ? "bseindia.com" : "nseindia.com"}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}

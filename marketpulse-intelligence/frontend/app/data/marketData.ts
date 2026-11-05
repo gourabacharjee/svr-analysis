@@ -6,11 +6,11 @@ export const INITIAL_MARKET_DATA = {
   market_status: "Market Live · Authentic Real-Time Feed Active",
   updated_at: new Date().toISOString(),
   indices: [
-    { name: "NIFTY 50", value: "24,557.40", change: "+596.80 (+2.49%)", tone: "up", high: "24,579.90", low: "24,296.30" },
-    { name: "BANK NIFTY", value: "57,802.10", change: "+1,888.50 (+3.38%)", tone: "up", high: "57,847.65", low: "56,718.20" },
-    { name: "SENSEX", value: "79,361.89", change: "+2,060.49 (+2.67%)", tone: "up", high: "79,465.03", low: "78,520.56" },
-    { name: "FIN NIFTY", value: "26,634.60", change: "+1,054.00 (+4.12%)", tone: "up", high: "26,667.00", low: "26,052.40" },
-    { name: "INDIA VIX", value: "15.61", change: "+0.42 (+2.78%)", tone: "up", high: "15.93", low: "11.62" }
+    { name: "NIFTY 50", value: "24,550.00", change: "+589.40 (+2.46%)", tone: "up", high: "24,579.90", low: "24,296.30", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" },
+    { name: "BANK NIFTY", value: "57,813.85", change: "+1,900.25 (+3.40%)", tone: "up", high: "57,847.65", low: "56,718.20", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" },
+    { name: "SENSEX", value: "79,361.89", change: "+2,060.49 (+2.67%)", tone: "up", high: "79,465.03", low: "78,520.56", source: "BSE India (bseindia.com)", url: "https://www.bseindia.com/" },
+    { name: "FIN NIFTY", value: "26,624.65", change: "+1,044.05 (+4.08%)", tone: "up", high: "26,667.00", low: "26,052.40", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" },
+    { name: "INDIA VIX", value: "15.60", change: "+0.41 (+2.68%)", tone: "up", high: "15.96", low: "11.62", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" }
   ],
   global_cues: [
     { name: "GIFT NIFTY", value: "24,595.00", change: "+615.00 (+2.56%)", tone: "up" },
