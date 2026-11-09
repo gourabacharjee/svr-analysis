@@ -6,14 +6,14 @@ export const INITIAL_MARKET_DATA = {
   market_status: "Market Live · Authentic Real-Time Feed Active",
   updated_at: new Date().toISOString(),
   indices: [
-    { name: "NIFTY 50", value: "24,941.50", change: "-44.90 (-0.18%)", tone: "down", high: "25,084.05", low: "24,874.85", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" },
-    { name: "BANK NIFTY", value: "59,212.10", change: "+361.45 (+0.61%)", tone: "up", high: "59,393.45", low: "59,010.05", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" },
-    { name: "SENSEX", value: "80,850.96", change: "-148.44 (-0.18%)", tone: "down", high: "81,339.41", low: "80,654.05", source: "BSE India (bseindia.com)", url: "https://www.bseindia.com/" },
-    { name: "FIN NIFTY", value: "27,273.45", change: "+92.80 (+0.34%)", tone: "up", high: "27,444.45", low: "27,203.15", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" },
-    { name: "INDIA VIX", value: "17.60", change: "-0.83 (-4.50%)", tone: "down", high: "18.44", low: "16.77", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" }
+    { name: "NIFTY 50", value: "24,885.50", change: "-100.90 (-0.40%)", tone: "down", high: "25,084.05", low: "24,838.75", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" },
+    { name: "BANK NIFTY", value: "59,085.20", change: "+234.55 (+0.40%)", tone: "up", high: "59,393.45", low: "58,877.85", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" },
+    { name: "SENSEX", value: "80,703.50", change: "-295.90 (-0.37%)", tone: "down", high: "81,339.41", low: "80,519.31", source: "BSE India (bseindia.com)", url: "https://www.bseindia.com/" },
+    { name: "FIN NIFTY", value: "27,237.15", change: "+56.50 (+0.21%)", tone: "up", high: "27,444.45", low: "27,134.15", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" },
+    { name: "INDIA VIX", value: "17.23", change: "-1.20 (-6.51%)", tone: "down", high: "18.44", low: "16.77", source: "NSE India (nseindia.com)", url: "https://www.nseindia.com/" }
   ],
   global_cues: [
-    { name: "GIFT NIFTY", value: "24,595.00", change: "+615.00 (+2.56%)", tone: "up" },
+    { name: "GIFT NIFTY", value: "24,910.00", change: "-76.40 (-0.31%)", tone: "down" },
     { name: "BRENT CRUDE", value: "$74.12/bbl", change: "-1.31 (-1.74%)", tone: "down" },
     { name: "USD / INR", value: "84.44", change: "+0.06 (+0.07%)", tone: "neutral" },
     { name: "US 10-YR YIELD", value: "4.26%", change: "-0.04 (-0.93%)", tone: "down" },
