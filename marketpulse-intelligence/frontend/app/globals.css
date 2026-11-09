@@ -447,3 +447,29 @@ body.theme-dark,
 .theme-dark ::-webkit-scrollbar-thumb:hover {
   background: #2D456B;
 }
+
+/* 3. ZERODHA & GROWW HIGH-FREQUENCY TICK FLASH ANIMATIONS */
+.tick-flash-up {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  border-color: #10B981 !important;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.35) !important;
+  transition: all 0.15s ease-out !important;
+}
+.tick-flash-down {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+  border-color: #F43F5E !important;
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.35) !important;
+  transition: all 0.15s ease-out !important;
+}
+
+.theme-light .tick-flash-up {
+  background-color: #ECFDF5 !important;
+  border-color: #10B981 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25) !important;
+}
+.theme-light .tick-flash-down {
+  background-color: #FFF1F2 !important;
+  border-color: #F43F5E !important;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.25) !important;
+}
+
