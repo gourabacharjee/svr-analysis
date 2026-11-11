@@ -421,12 +421,12 @@ export default function SVRAnalysisHome() {
     "BRENT CRUDE": 74.80,
   });
   const CURRENT_VALUES_REF = useRef<Record<string, number>>({
-    "NIFTY 50": 24885.50,
-    "BANK NIFTY": 59085.20,
-    "SENSEX": 80703.50,
-    "FIN NIFTY": 27237.15,
-    "INDIA VIX": 17.23,
-    "GIFT NIFTY": 24910.00,
+    "NIFTY 50": 25044.65,
+    "BANK NIFTY": 59741.25,
+    "SENSEX": 81106.65,
+    "FIN NIFTY": 27384.90,
+    "INDIA VIX": 17.42,
+    "GIFT NIFTY": 25060.00,
     "USD / INR": 84.44,
     "BRENT CRUDE": 74.12,
   });
@@ -772,6 +772,18 @@ export default function SVRAnalysisHome() {
           defaultCategory: "Sector News (India)",
           defaultSubcategory: "Corporate & Equities",
         },
+        {
+          name: "Economic Times",
+          url: "https://news.google.com/rss/search?q=site:economictimes.indiatimes.com+(markets+OR+stocks+OR+nifty+OR+sensex+OR+trading+OR+shares)+when:4h&hl=en-IN&gl=IN&ceid=IN:en",
+          defaultCategory: "Indian Market News",
+          defaultSubcategory: "ET Markets Wire",
+        },
+        {
+          name: "Economic Times",
+          url: "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
+          defaultCategory: "Sector News (India)",
+          defaultSubcategory: "ET Markets & Equities",
+        },
       ];
 
       const feedPromises = FEEDS.map(async (feed) => {
@@ -791,12 +803,26 @@ export default function SVRAnalysisHome() {
               source.toLowerCase().includes("moneycontrol") ||
               (it.link && it.link.toLowerCase().includes("moneycontrol"));
 
+            // Economic Times attribution and headline cleaning
+            const isETFeed = feed.name.includes("Economic Times") ||
+              source.toLowerCase().includes("economic times") ||
+              source.toLowerCase().includes("et ") ||
+              (it.link && it.link.toLowerCase().includes("economictimes"));
+
             if (isMoneycontrolFeed) {
               source = "Moneycontrol.com";
               headline = headline
                 .replace(/\s*-\s*Moneycontrol\.com\s*$/i, "")
                 .replace(/\s*-\s*Moneycontrol\s*$/i, "")
                 .replace(/\s*\|\s*Moneycontrol\s*$/i, "")
+                .trim();
+            } else if (isETFeed) {
+              source = "Economic Times";
+              headline = headline
+                .replace(/\s*-\s*The Economic Times\s*$/i, "")
+                .replace(/\s*-\s*Economic Times\s*$/i, "")
+                .replace(/\s*\|\s*Economic Times\s*$/i, "")
+                .replace(/\s*-\s*ET Markets\s*$/i, "")
                 .trim();
             } else if (headline.includes(" - ")) {
               const parts = headline.split(" - ");
@@ -1014,20 +1040,20 @@ export default function SVRAnalysisHome() {
 
           let delta = 0;
           if (idx.name === "NIFTY 50") {
-            const raw = (Math.random() - 0.49) * 3.5;
+            const raw = (Math.random() - 0.49) * 0.8;
             delta = Math.round(raw * 20) / 20; // 0.05 tick size
             niftyDelta = delta;
           } else if (idx.name === "SENSEX") {
-            const raw = (Math.random() - 0.49) * 11.5;
+            const raw = (Math.random() - 0.49) * 2.5;
             delta = Math.round(raw * 100) / 100; // 0.01 tick size
           } else if (idx.name === "BANK NIFTY") {
-            const raw = (Math.random() - 0.49) * 8.5;
+            const raw = (Math.random() - 0.49) * 1.5;
             delta = Math.round(raw * 20) / 20;
           } else if (idx.name === "FIN NIFTY") {
-            const raw = (Math.random() - 0.49) * 3.8;
+            const raw = (Math.random() - 0.49) * 0.9;
             delta = Math.round(raw * 20) / 20;
           } else if (idx.name === "INDIA VIX") {
-            const raw = (Math.random() - 0.5) * 0.04;
+            const raw = (Math.random() - 0.5) * 0.01;
             delta = Math.round(raw * 100) / 100;
           }
 
@@ -1814,8 +1840,18 @@ export default function SVRAnalysisHome() {
               {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
 
-            {/* SVR Analysis Official Logo & Brand */}
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* SVR Analysis Official Logo & Brand — Click to Refresh Home */}
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab("overview");
+                setSearchQuery("");
+                window.location.reload();
+              }}
+              className="flex items-center gap-2 sm:gap-3 min-w-0 cursor-pointer select-none no-underline"
+              title="Refresh Home — SVR Analysis"
+            >
               <img
                 src={logoSrc}
                 alt="SVR Analysis Logo"
@@ -1834,7 +1870,7 @@ export default function SVRAnalysisHome() {
                   TRADING | RESEARCH | ANALYSIS
                 </p>
               </div>
-            </div>
+            </a>
           </div>
 
           {/* Global Search Bar on Desktop (md+) with Live Interactive Dropdown */}
@@ -2304,14 +2340,24 @@ export default function SVRAnalysisHome() {
           <div className="p-3 overflow-y-auto space-y-1">
             {/* Mobile Sidebar Close Bar */}
             <div className="lg:hidden flex items-center justify-between px-3 py-2.5 mb-2 border-b border-[#16243A]">
-              <div className="flex items-center gap-2">
+              <a
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveTab("overview");
+                  setMobileMenuOpen(false);
+                  window.location.reload();
+                }}
+                className="flex items-center gap-2 cursor-pointer no-underline select-none"
+                title="Refresh Home — SVR Analysis"
+              >
                 <img
                   src={logoSrc}
                   alt="SVR Analysis"
                   className="h-6 w-auto object-contain rounded"
                 />
                 <span className="text-xs font-black text-white">SVR ANALYSIS</span>
-              </div>
+              </a>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-[#142036]"
@@ -4998,7 +5044,18 @@ export default function SVRAnalysisHome() {
       {/* 4. FOOTER */}
       <footer className="bg-[#080D17] border-t border-[#15233A] py-6 px-4 lg:px-8 mt-auto text-xs text-[#657C9E]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <a
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveTab("overview");
+              setSearchQuery("");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              window.location.reload();
+            }}
+            className="flex items-center gap-3 cursor-pointer select-none no-underline"
+            title="Refresh Home — SVR Analysis"
+          >
             <img src={logoSrc} alt="SVR Analysis" className="h-8 w-auto object-contain rounded" />
             <div>
               <span className="font-extrabold text-white text-sm">SVR Analysis</span>
@@ -5006,7 +5063,7 @@ export default function SVRAnalysisHome() {
                 TRADING | RESEARCH | ANALYSIS
               </span>
             </div>
-          </div>
+          </a>
 
           <div className="flex items-center gap-4 text-[11px]">
             <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
